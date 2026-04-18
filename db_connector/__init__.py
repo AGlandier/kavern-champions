@@ -8,6 +8,7 @@ from .battleroom_repository import (
 )
 from .battle_repository import (
     create_battle,
+    get_battle_by_id,
     get_battles_by_room,
     get_all_battles,
     get_battles_by_user,
@@ -32,6 +33,7 @@ __all__ = [
     "get_room_players",
     "delete_battleroom",
     "create_battle",
+    "get_battle_by_id",
     "get_battles_by_room",
     "get_all_battles",
     "get_battles_by_user",

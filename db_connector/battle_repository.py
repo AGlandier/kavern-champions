@@ -43,6 +43,22 @@ def create_battle(battleroom_id: int, content: dict[str, Any] | None = None) -> 
     )
 
 
+def get_battle_by_id(battle_id: int) -> Battle:
+    """
+    Retourne une battle par son identifiant.
+
+    Raises:
+        NotFoundError: Si la battle n'existe pas.
+    """
+    db: sqlite3.Connection = get_db()
+    row = db.execute(
+        "SELECT id, battleroom, content FROM battle WHERE id = ?", (battle_id,)
+    ).fetchone()
+    if row is None:
+        raise NotFoundError(f"Battle introuvable (id={battle_id}).")
+    return Battle(id=row["id"], battleroom_id=row["battleroom"], content=json.loads(row["content"]))
+
+
 def get_battles_by_room(battleroom_id: int) -> list[Battle]:
     """Retourne toutes les battles d'une battleroom."""
     db: sqlite3.Connection = get_db()
@@ -78,15 +94,12 @@ def get_battles_by_user(username: str) -> list[Battle]:
     ]
 
 
-def set_champions_room_id(battle_id: int, champions_room_id: int, username: str) -> Battle:
+def set_champions_room_id(battle_id: int, champions_room_id: int) -> Battle:
     """
     Renseigne le champions_room_id d'une battle.
 
-    Seul un des deux participants (player1 ou player2) peut effectuer cette action.
-
     Raises:
-        NotFoundError:  Si la battle n'existe pas.
-        PermissionError: Si l'utilisateur n'est pas participant de la battle.
+        NotFoundError: Si la battle n'existe pas.
     """
     db: sqlite3.Connection = get_db()
     row = db.execute(
@@ -99,9 +112,6 @@ def set_champions_room_id(battle_id: int, champions_room_id: int, username: str)
         content = json.loads(row["content"])
     except json.JSONDecodeError:
         content = {}
-
-    if username not in (content.get("player1"), content.get("player2")):
-        raise PermissionError(f"'{username}' n'est pas participant de cette battle.")
 
     content["champions_room_id"] = champions_room_id
     db.execute(

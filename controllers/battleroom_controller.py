@@ -192,15 +192,19 @@ def set_battle_room():
         return jsonify({"error": "'champions_room_id' doit être un code à 8 chiffres"}), 400
 
     try:
-        battle = db_connector.set_champions_room_id(battle_id, code, g.current_user)
-        return jsonify({
-            "battle_id": battle.id,
-            "champions_room_id": battle.content["champions_room_id"],
-        }), 200
+        battle = db_connector.get_battle_by_id(battle_id)
     except db_connector.NotFoundError:
         return jsonify({"error": "Battle introuvable"}), 404
-    except PermissionError as e:
-        return jsonify({"error": str(e)}), 403
+
+    content = battle.content
+    if g.current_user not in (content.get("player1"), content.get("player2")):
+        return jsonify({"error": f"'{g.current_user}' n'est pas participant de cette battle."}), 403
+
+    battle = db_connector.set_champions_room_id(battle_id, code)
+    return jsonify({
+        "battle_id": battle.id,
+        "champions_room_id": battle.content["champions_room_id"],
+    }), 200
 
 
 # ------------------------------------------------------------------
