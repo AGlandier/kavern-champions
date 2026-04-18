@@ -651,9 +651,10 @@ SWAGGER_TEMPLATE = {
         "Battle": {
             "type": "object",
             "properties": {
-                "id": {"type": "integer"},
+                "id":         {"type": "integer"},
                 "battleroom": {"type": "integer"},
-                "content": {"type": "object"},
+                "finished":   {"type": "boolean"},
+                "content":    {"type": "object"},
             },
         },
         "User": {
