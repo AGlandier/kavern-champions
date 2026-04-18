@@ -318,10 +318,17 @@ SWAGGER_TEMPLATE = {
             "get": {
                 "tags": ["Battleroom"],
                 "summary": "Lister les battles d'une battleroom",
-                "parameters": [{
-                    "in": "path", "name": "room_id", "required": True,
-                    "type": "integer", "description": "Identifiant de la battleroom",
-                }],
+                "parameters": [
+                    {
+                        "in": "path", "name": "room_id", "required": True,
+                        "type": "integer", "description": "Identifiant de la battleroom",
+                    },
+                    {
+                        "in": "query", "name": "round", "required": False,
+                        "type": "integer", "default": -1,
+                        "description": "Filtre par numéro de round. -1 (défaut) retourne tous les rounds.",
+                    },
+                ],
                 "responses": {
                     "200": {
                         "description": "Liste des battles",
@@ -334,14 +341,17 @@ SWAGGER_TEMPLATE = {
                                     "items": {
                                         "type": "object",
                                         "properties": {
-                                            "id":      {"type": "integer"},
-                                            "content": {"type": "object"},
+                                            "id":       {"type": "integer"},
+                                            "round":    {"type": "integer"},
+                                            "finished": {"type": "boolean"},
+                                            "content":  {"type": "object"},
                                         },
                                     },
                                 },
                             },
                         },
                     },
+                    "400": {"description": "Paramètre 'round' invalide"},
                     "404": {"description": "Battleroom introuvable"},
                 },
             },
@@ -653,6 +663,7 @@ SWAGGER_TEMPLATE = {
             "properties": {
                 "id":         {"type": "integer"},
                 "battleroom": {"type": "integer"},
+                "round":      {"type": "integer"},
                 "finished":   {"type": "boolean"},
                 "content":    {"type": "object"},
             },
