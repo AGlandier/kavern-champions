@@ -210,6 +210,19 @@ def get_all_battles():
 
 
 # ------------------------------------------------------------------
+# GET /battleroom/battle/<id>
+# Retourne une battle par son identifiant
+# ------------------------------------------------------------------
+@battleroom_bp.route("/battle/<int:battle_id>", methods=["GET"])
+def get_battle(battle_id: int):
+    try:
+        battle = battle_repository.get_battle_by_id(battle_id)
+        return jsonify({"id": battle.id, "battleroom": battle.battleroom_id, "content": battle.content}), 200
+    except NotFoundError:
+        return jsonify({"error": "Battle introuvable"}), 404
+
+
+# ------------------------------------------------------------------
 # GET /battleroom/battle/<user>
 # Retourne les battles associées à un utilisateur
 # ------------------------------------------------------------------
