@@ -98,6 +98,15 @@ def update_user_teamlist(name: str, teamlist: str, db_provider: Callable[[], sql
     return get_user(name, db_provider=db_provider)
 
 
+def increment_number_battle(name: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> None:
+    """Incrémente le compteur de battles d'un utilisateur. Silencieux si l'utilisateur n'existe pas."""
+    db: sqlite3.Connection = db_provider()
+    db.execute(
+        "UPDATE user SET number_battle = number_battle + 1 WHERE name = ?", (name,)
+    )
+    db.commit()
+
+
 def user_has_password(name: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> bool:
     """Retourne True si l'utilisateur a un mot de passe défini."""
     db: sqlite3.Connection = db_provider()

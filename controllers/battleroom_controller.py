@@ -293,4 +293,10 @@ def end_battle():
             return jsonify({"error": f"'{g.current_user}' n'est pas participant de cette battle."}), 403
 
     battle = battle_repository.end_battle(battle_id, data.get("result", {}))
+
+    # Incrémente number_battle pour chaque participant réel (pas les byes)
+    for player in (battle.content.get("player1"), battle.content.get("player2")):
+        if player is not None:
+            user_repository.increment_number_battle(player)
+
     return jsonify({"battle_id": battle.id, "content": battle.content}), 200
