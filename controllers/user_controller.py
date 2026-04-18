@@ -3,8 +3,9 @@ user_controller — Blueprint Flask
 Préfixe : /user
 """
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, g
 from db_connector import get_user, update_user_teamlist, user_has_password, NotFoundError, DuplicateError
+from controllers.decorators import require_user_token
 
 user_bp = Blueprint("user", __name__)
 
@@ -53,16 +54,13 @@ def get_stats():
 # Met à jour la teamlist d'un utilisateur
 # ------------------------------------------------------------------
 @user_bp.route("/teamlist", methods=["POST"])
+@require_user_token
 def update_teamlist():
     data = request.get_json(silent=True) or {}
-    username = data.get("name", "").strip()
     teamlist = data.get("teamlist", "").strip()
 
-    if not username:
-        return jsonify({"error": "Le champ 'name' est requis"}), 400
-
     try:
-        user = update_user_teamlist(username, teamlist)
+        user = update_user_teamlist(g.current_user, teamlist)
         return jsonify({"name": user.name, "teamlist": user.teamlist}), 200
     except NotFoundError:
         return jsonify({"error": "Utilisateur introuvable"}), 404
