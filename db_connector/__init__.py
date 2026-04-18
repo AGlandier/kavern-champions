@@ -1,5 +1,6 @@
 from .battleroom_repository import (
     create_battleroom,
+    get_all_battlerooms,
     get_battleroom_by_id,
     next_battleroom_round,
     enter_battleroom,
@@ -27,6 +28,7 @@ from .exceptions import NotFoundError, DuplicateError
 
 __all__ = [
     "create_battleroom",
+    "get_all_battlerooms",
     "get_battleroom_by_id",
     "next_battleroom_round",
     "enter_battleroom",

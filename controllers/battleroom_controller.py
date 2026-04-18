@@ -30,6 +30,19 @@ def create():
     return jsonify(battleroom), 201
 
 
+# ------------------------------------------------------------------
+# GET /battleroom/
+# Retourne la liste de toutes les battlerooms
+# ------------------------------------------------------------------
+@battleroom_bp.route("/", methods=["GET"])
+def get_all_rooms():
+    rooms = battleroom_repository.get_all_battlerooms()
+    return jsonify([
+        {"id": r.id, "name": r.name, "date": r.date, "round": r.round}
+        for r in rooms
+    ]), 200
+
+
 @battleroom_bp.route("/<room_id>", methods=["GET"])
 def get_room(room_id):
     try:

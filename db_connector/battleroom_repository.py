@@ -46,6 +46,16 @@ def create_battleroom(name: str, db_provider: Callable[[], sqlite3.Connection] =
     )
 
 
+def get_all_battlerooms(db_provider: Callable[[], sqlite3.Connection] = get_db) -> list[Battleroom]:
+    """Retourne toutes les battlerooms."""
+    db: sqlite3.Connection = db_provider()
+    rows = db.execute("SELECT id, name, date, round FROM battlerooms").fetchall()
+    return [
+        Battleroom(id=r["id"], name=r["name"], date=r["date"], round=r["round"])
+        for r in rows
+    ]
+
+
 def get_battleroom_by_id(battleroom_id: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battleroom:
     """
     Récupère une battleroom par son identifiant.
