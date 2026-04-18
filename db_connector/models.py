@@ -19,6 +19,7 @@ class Battleroom:
 class Battle:
     id: int
     battleroom_id: int
+    finished: bool
     content: dict[str, Any] = field(default_factory=dict)
 
 

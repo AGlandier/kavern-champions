@@ -106,14 +106,13 @@ def next_round():
         # 3. Incrémente le round
         battleroom = battleroom_repository.next_battleroom_round(battleroom_id)
 
-        # 4. Persiste les combats en base (player2=None pour les byes, clôturés automatiquement)
+        # 4. Persiste les combats en base (byes clôturés automatiquement via finished=True)
         battles = [
-            battle_repository.create_battle(battleroom_id, {
-                "player1": p.player1,
-                "player2": p.player2,
-                "champions_room_id": None,
-                **({"status": "ended"} if p.player2 is None else {}),
-            })
+            battle_repository.create_battle(
+                battleroom_id,
+                {"player1": p.player1, "player2": p.player2, "champions_room_id": None},
+                finished=p.player2 is None,
+            )
             for p in pairings
         ]
 
@@ -123,6 +122,7 @@ def next_round():
             "battles": [
                 {
                     "id": b.id,
+                    "finished": b.finished,
                     "player1": b.content["player1"],
                     "player2": b.content.get("player2"),
                     "champions_room_id": b.content.get("champions_room_id"),
@@ -171,7 +171,7 @@ def get_battles_by_room(room_id: int):
     return jsonify({
         "battleroom_id": room_id,
         "battles": [
-            {"id": b.id, "content": b.content}
+            {"id": b.id, "finished": b.finished, "content": b.content}
             for b in battles
         ],
     }), 200
@@ -204,7 +204,7 @@ def end_room():
 def get_all_battles():
     battles = battle_repository.get_all_battles()
     return jsonify([
-        {"id": b.id, "battleroom": b.battleroom_id, "content": b.content}
+        {"id": b.id, "battleroom": b.battleroom_id, "finished": b.finished, "content": b.content}
         for b in battles
     ]), 200
 
@@ -217,7 +217,7 @@ def get_all_battles():
 def get_battle(battle_id: int):
     try:
         battle = battle_repository.get_battle_by_id(battle_id)
-        return jsonify({"id": battle.id, "battleroom": battle.battleroom_id, "content": battle.content}), 200
+        return jsonify({"id": battle.id, "battleroom": battle.battleroom_id, "finished": battle.finished, "content": battle.content}), 200
     except NotFoundError:
         return jsonify({"error": "Battle introuvable"}), 404
 
@@ -237,7 +237,7 @@ def get_battle_by_user(user: str):
     return jsonify({
         "user": user,
         "battles": [
-            {"id": b.id, "battleroom": b.battleroom_id, "content": b.content}
+            {"id": b.id, "battleroom": b.battleroom_id, "finished": b.finished, "content": b.content}
             for b in battles
         ],
     }), 200
@@ -312,4 +312,4 @@ def end_battle():
         if player is not None:
             user_repository.increment_number_battle(player)
 
-    return jsonify({"battle_id": battle.id, "content": battle.content}), 200
+    return jsonify({"battle_id": battle.id, "finished": battle.finished, "content": battle.content}), 200
