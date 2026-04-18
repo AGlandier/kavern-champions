@@ -51,13 +51,13 @@ def next_round():
         return jsonify({"error": "Le champ 'battleroom_id' est requis"}), 400
 
     try:
-        # 1. Récupère les joueurs et les appariements passés
+        # 1. Récupère les joueurs et l'historique complet (matchs + byes)
         players = db_connector.get_room_players(battleroom_id)
         past_battles = db_connector.get_battles_by_room(battleroom_id)
         past_pairings = [
-            (b.content["player1"], b.content["player2"])
+            (b.content["player1"], b.content.get("player2"))
             for b in past_battles
-            if "player1" in b.content and "player2" in b.content
+            if "player1" in b.content
         ]
 
         # 2. Génère les appariements via le core (aucun I/O)
@@ -66,7 +66,7 @@ def next_round():
         # 3. Incrémente le round
         battleroom = db_connector.next_battleroom_round(battleroom_id)
 
-        # 4. Persiste les combats en base
+        # 4. Persiste les combats en base (player2=None pour les byes)
         battles = [
             db_connector.create_battle(battleroom_id, {
                 "player1": p.player1,
@@ -83,8 +83,9 @@ def next_round():
                 {
                     "id": b.id,
                     "player1": b.content["player1"],
-                    "player2": b.content["player2"],
-                    "champions_room_id": b.content["champions_room_id"],
+                    "player2": b.content.get("player2"),
+                    "champions_room_id": b.content.get("champions_room_id"),
+                    "bye": b.content.get("player2") is None,
                 }
                 for b in battles
             ],
