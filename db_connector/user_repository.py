@@ -3,13 +3,14 @@ user_repository.py — Opérations CRUD sur la table `user`.
 """
 
 import sqlite3
+from collections.abc import Callable
 from werkzeug.security import generate_password_hash, check_password_hash
 from database.db import get_db
 from db_connector.models import User
 from db_connector.exceptions import NotFoundError, DuplicateError
 
 
-def create_user(name: str, teamlist: str = "") -> User:
+def create_user(name: str, teamlist: str = "", db_provider: Callable[[], sqlite3.Connection] = get_db) -> User:
     """
     Crée un nouvel utilisateur en base.
 
@@ -28,7 +29,7 @@ def create_user(name: str, teamlist: str = "") -> User:
     if not name:
         raise ValueError("Le nom de l'utilisateur ne peut pas être vide.")
 
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
 
     # Vérifie l'unicité avant insertion pour lever une erreur explicite
     existing = db.execute(
@@ -46,7 +47,7 @@ def create_user(name: str, teamlist: str = "") -> User:
     return User(name=name, teamlist=teamlist, number_battle=0)
 
 
-def get_user(name: str) -> User:
+def get_user(name: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> User:
     """
     Récupère un utilisateur par son nom (clé primaire).
 
@@ -60,7 +61,7 @@ def get_user(name: str) -> User:
         NotFoundError: Si aucun utilisateur ne correspond à ce nom.
     """
     name = name.strip()
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
 
     row = db.execute(
         "SELECT name, teamlist, number_battle FROM user WHERE name = ?",
@@ -77,7 +78,7 @@ def get_user(name: str) -> User:
     )
 
 
-def update_user_teamlist(name: str, teamlist: str) -> User:
+def update_user_teamlist(name: str, teamlist: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> User:
     """
     Met à jour la teamlist d'un utilisateur.
 
@@ -88,25 +89,25 @@ def update_user_teamlist(name: str, teamlist: str) -> User:
         NotFoundError: Si l'utilisateur n'existe pas.
     """
     name = name.strip()
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     row = db.execute("SELECT name FROM user WHERE name = ?", (name,)).fetchone()
     if row is None:
         raise NotFoundError(f"Utilisateur '{name}' introuvable.")
     db.execute("UPDATE user SET teamlist = ? WHERE name = ?", (teamlist, name))
     db.commit()
-    return get_user(name)
+    return get_user(name, db_provider=db_provider)
 
 
-def user_has_password(name: str) -> bool:
+def user_has_password(name: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> bool:
     """Retourne True si l'utilisateur a un mot de passe défini."""
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     row = db.execute(
         "SELECT password_hash FROM user WHERE name = ?", (name.strip(),)
     ).fetchone()
     return row is not None and row["password_hash"] is not None
 
 
-def set_user_password(name: str, password: str) -> None:
+def set_user_password(name: str, password: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> None:
     """
     Hash et enregistre le mot de passe de l'utilisateur.
 
@@ -114,7 +115,7 @@ def set_user_password(name: str, password: str) -> None:
         NotFoundError: Si l'utilisateur n'existe pas.
     """
     name = name.strip()
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     row = db.execute("SELECT name FROM user WHERE name = ?", (name,)).fetchone()
     if row is None:
         raise NotFoundError(f"Utilisateur '{name}' introuvable.")
@@ -125,9 +126,9 @@ def set_user_password(name: str, password: str) -> None:
     db.commit()
 
 
-def check_user_password(name: str, password: str) -> bool:
+def check_user_password(name: str, password: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> bool:
     """Retourne True si le mot de passe correspond au hash stocké."""
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     row = db.execute(
         "SELECT password_hash FROM user WHERE name = ?", (name.strip(),)
     ).fetchone()

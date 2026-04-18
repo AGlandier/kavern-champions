@@ -4,13 +4,14 @@ battle_repository.py — Opérations CRUD sur la table `battle`.
 
 import json
 import sqlite3
+from collections.abc import Callable
 from typing import Any
 from database.db import get_db
 from db_connector.models import Battle
 from db_connector.exceptions import NotFoundError
 
 
-def create_battle(battleroom_id: int, content: dict[str, Any] | None = None) -> Battle:
+def create_battle(battleroom_id: int, content: dict[str, Any] | None = None, db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battle:
     """
     Crée une nouvelle battle rattachée à une battleroom existante.
 
@@ -29,7 +30,7 @@ def create_battle(battleroom_id: int, content: dict[str, Any] | None = None) -> 
         raise ValueError("battleroom_id doit être un entier positif.")
 
     content = content or {}
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     cursor = db.execute(
         "INSERT INTO battle (battleroom, content) VALUES (?, ?)",
         (battleroom_id, json.dumps(content)),
@@ -43,14 +44,14 @@ def create_battle(battleroom_id: int, content: dict[str, Any] | None = None) -> 
     )
 
 
-def get_battle_by_id(battle_id: int) -> Battle:
+def get_battle_by_id(battle_id: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battle:
     """
     Retourne une battle par son identifiant.
 
     Raises:
         NotFoundError: Si la battle n'existe pas.
     """
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     row = db.execute(
         "SELECT id, battleroom, content FROM battle WHERE id = ?", (battle_id,)
     ).fetchone()
@@ -59,9 +60,9 @@ def get_battle_by_id(battle_id: int) -> Battle:
     return Battle(id=row["id"], battleroom_id=row["battleroom"], content=json.loads(row["content"]))
 
 
-def get_battles_by_room(battleroom_id: int) -> list[Battle]:
+def get_battles_by_room(battleroom_id: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> list[Battle]:
     """Retourne toutes les battles d'une battleroom."""
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     rows = db.execute(
         "SELECT id, battleroom, content FROM battle WHERE battleroom = ?", (battleroom_id,)
     ).fetchall()
@@ -71,9 +72,9 @@ def get_battles_by_room(battleroom_id: int) -> list[Battle]:
     ]
 
 
-def get_all_battles() -> list[Battle]:
+def get_all_battles(db_provider: Callable[[], sqlite3.Connection] = get_db) -> list[Battle]:
     """Retourne toutes les battles."""
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     rows = db.execute("SELECT id, battleroom, content FROM battle").fetchall()
     return [
         Battle(id=r["id"], battleroom_id=r["battleroom"], content=json.loads(r["content"]))
@@ -81,9 +82,9 @@ def get_all_battles() -> list[Battle]:
     ]
 
 
-def get_battles_by_user(username: str) -> list[Battle]:
+def get_battles_by_user(username: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> list[Battle]:
     """Retourne les battles dont le contenu mentionne l'utilisateur."""
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     rows = db.execute(
         "SELECT id, battleroom, content FROM battle WHERE content LIKE ?",
         (f"%{username}%",),
@@ -94,14 +95,14 @@ def get_battles_by_user(username: str) -> list[Battle]:
     ]
 
 
-def set_champions_room_id(battle_id: int, champions_room_id: int) -> Battle:
+def set_champions_room_id(battle_id: int, champions_room_id: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battle:
     """
     Renseigne le champions_room_id d'une battle.
 
     Raises:
         NotFoundError: Si la battle n'existe pas.
     """
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     row = db.execute(
         "SELECT id, battleroom, content FROM battle WHERE id = ?", (battle_id,)
     ).fetchone()
@@ -122,14 +123,14 @@ def set_champions_room_id(battle_id: int, champions_room_id: int) -> Battle:
     return Battle(id=battle_id, battleroom_id=row["battleroom"], content=content)
 
 
-def end_battle(battle_id: int, result: dict[str, Any]) -> Battle:
+def end_battle(battle_id: int, result: dict[str, Any], db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battle:
     """
     Clôture une battle en fusionnant le résultat dans son contenu JSON.
 
     Raises:
         NotFoundError: Si la battle n'existe pas.
     """
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     row = db.execute(
         "SELECT id, battleroom, content FROM battle WHERE id = ?", (battle_id,)
     ).fetchone()

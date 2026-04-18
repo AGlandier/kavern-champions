@@ -3,12 +3,13 @@ battleroom_repository.py — Opérations CRUD sur la table `battlerooms`.
 """
 
 import sqlite3
+from collections.abc import Callable
 from database.db import get_db
 from db_connector.models import Battleroom
 from db_connector.exceptions import NotFoundError
 
 
-def create_battleroom(name: str) -> Battleroom:
+def create_battleroom(name: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battleroom:
     """
     Insère une nouvelle battleroom en base.
 
@@ -25,7 +26,7 @@ def create_battleroom(name: str) -> Battleroom:
     if not name:
         raise ValueError("Le nom de la battleroom ne peut pas être vide.")
 
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     cursor = db.execute(
         "INSERT INTO battlerooms (name) VALUES (?)",
         (name,),
@@ -45,7 +46,7 @@ def create_battleroom(name: str) -> Battleroom:
     )
 
 
-def get_battleroom_by_id(battleroom_id: int) -> Battleroom:
+def get_battleroom_by_id(battleroom_id: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battleroom:
     """
     Récupère une battleroom par son identifiant.
 
@@ -58,7 +59,7 @@ def get_battleroom_by_id(battleroom_id: int) -> Battleroom:
     Raises:
         NotFoundError: Si aucune battleroom ne correspond à cet id.
     """
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     row = db.execute(
         "SELECT id, name, date, round FROM battlerooms WHERE id = ?",
         (battleroom_id,),
@@ -75,14 +76,14 @@ def get_battleroom_by_id(battleroom_id: int) -> Battleroom:
     )
 
 
-def next_battleroom_round(battleroom_id: int) -> Battleroom:
+def next_battleroom_round(battleroom_id: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battleroom:
     """
     Incrémente le round de la battleroom et retourne l'objet mis à jour.
 
     Raises:
         NotFoundError: Si la battleroom n'existe pas.
     """
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     row = db.execute(
         "SELECT round FROM battlerooms WHERE id = ?", (battleroom_id,)
     ).fetchone()
@@ -93,10 +94,10 @@ def next_battleroom_round(battleroom_id: int) -> Battleroom:
         (row["round"] + 1, battleroom_id),
     )
     db.commit()
-    return get_battleroom_by_id(battleroom_id)
+    return get_battleroom_by_id(battleroom_id, db_provider=db_provider)
 
 
-def enter_battleroom(battleroom_id: int, username: str) -> None:
+def enter_battleroom(battleroom_id: int, username: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> None:
     """
     Enregistre la participation d'un joueur à une battleroom.
 
@@ -108,7 +109,7 @@ def enter_battleroom(battleroom_id: int, username: str) -> None:
     Raises:
         NotFoundError: Si la battleroom n'existe pas.
     """
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     room = db.execute(
         "SELECT id FROM battlerooms WHERE id = ?", (battleroom_id,)
     ).fetchone()
@@ -122,14 +123,14 @@ def enter_battleroom(battleroom_id: int, username: str) -> None:
     db.commit()
 
 
-def get_room_players(battleroom_id: int) -> list[str]:
+def get_room_players(battleroom_id: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> list[str]:
     """
     Retourne la liste des noms de joueurs inscrits dans la battleroom.
 
     Raises:
         NotFoundError: Si la battleroom n'existe pas.
     """
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     if db.execute("SELECT id FROM battlerooms WHERE id = ?", (battleroom_id,)).fetchone() is None:
         raise NotFoundError(f"Battleroom introuvable (id={battleroom_id}).")
     rows = db.execute(
@@ -138,14 +139,14 @@ def get_room_players(battleroom_id: int) -> list[str]:
     return [r["username"] for r in rows]
 
 
-def delete_battleroom(battleroom_id: int) -> None:
+def delete_battleroom(battleroom_id: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> None:
     """
     Supprime une battleroom (et ses battles en cascade).
 
     Raises:
         NotFoundError: Si la battleroom n'existe pas.
     """
-    db: sqlite3.Connection = get_db()
+    db: sqlite3.Connection = db_provider()
     row = db.execute(
         "SELECT id FROM battlerooms WHERE id = ?", (battleroom_id,)
     ).fetchone()
