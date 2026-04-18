@@ -43,6 +43,32 @@ def get_all_rooms():
     ]), 200
 
 
+# ------------------------------------------------------------------
+# GET /battleroom/<room_id>/players
+# Retourne la liste des joueurs inscrits dans une battleroom
+# ------------------------------------------------------------------
+@battleroom_bp.route("/<int:room_id>/players", methods=["GET"])
+def get_players(room_id: int):
+    try:
+        players = battleroom_repository.get_room_players(room_id)
+        return jsonify({"battleroom_id": room_id, "players": players}), 200
+    except NotFoundError:
+        return jsonify({"error": "Battleroom introuvable"}), 404
+
+
+# ------------------------------------------------------------------
+# GET /battleroom/<room_id>/players/<username>
+# Vérifie si un joueur est inscrit dans une battleroom
+# ------------------------------------------------------------------
+@battleroom_bp.route("/<int:room_id>/players/<string:username>", methods=["GET"])
+def is_player_in_room(room_id: int, username: str):
+    try:
+        players = battleroom_repository.get_room_players(room_id)
+        return jsonify({"battleroom_id": room_id, "username": username, "in_room": username in players}), 200
+    except NotFoundError:
+        return jsonify({"error": "Battleroom introuvable"}), 404
+
+
 @battleroom_bp.route("/<room_id>", methods=["GET"])
 def get_room(room_id):
     try:

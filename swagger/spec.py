@@ -315,6 +315,61 @@ SWAGGER_TEMPLATE = {
             },
         },
 
+        "/battleroom/{room_id}/players": {
+            "get": {
+                "tags": ["Battleroom"],
+                "summary": "Lister les joueurs d'une battleroom",
+                "parameters": [{
+                    "in": "path", "name": "room_id", "required": True,
+                    "type": "integer", "description": "Identifiant de la battleroom",
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Liste des joueurs",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "battleroom_id": {"type": "integer"},
+                                "players": {"type": "array", "items": {"type": "string"}},
+                            },
+                        },
+                    },
+                    "404": {"description": "Battleroom introuvable"},
+                },
+            },
+        },
+
+        "/battleroom/{room_id}/players/{username}": {
+            "get": {
+                "tags": ["Battleroom"],
+                "summary": "Vérifier si un joueur est dans une battleroom",
+                "parameters": [
+                    {
+                        "in": "path", "name": "room_id", "required": True,
+                        "type": "integer", "description": "Identifiant de la battleroom",
+                    },
+                    {
+                        "in": "path", "name": "username", "required": True,
+                        "type": "string", "description": "Pseudo du joueur",
+                    },
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Résultat de la vérification",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "battleroom_id": {"type": "integer"},
+                                "username":      {"type": "string"},
+                                "in_room":       {"type": "boolean"},
+                            },
+                        },
+                    },
+                    "404": {"description": "Battleroom introuvable"},
+                },
+            },
+        },
+
         "/battleroom/next": {
             "post": {
                 "tags": ["Battleroom"],
