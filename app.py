@@ -19,6 +19,12 @@ def create_app(config_class=Config) -> Flask:
     app.register_blueprint(user_bp, url_prefix="/user")
     app.register_blueprint(auth_bp, url_prefix="/auth")
 
+    # Swagger UI — uniquement en mode développement
+    if app.config.get("DEBUG"):
+        from flasgger import Swagger
+        from swagger.spec import SWAGGER_TEMPLATE
+        Swagger(app, template=SWAGGER_TEMPLATE)
+
     return app
 
 

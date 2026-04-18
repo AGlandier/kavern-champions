@@ -10,6 +10,7 @@ load_dotenv(_ROOT_DIR / ".env")
 
 class Config:
     # Flask
+    DEBUG: bool = os.environ.get("FLASK_DEBUG", "0") == "1"
     SECRET_KEY: str = os.environ.get("SECRET_KEY", "change-me-in-production")
 
     # SQLite
