@@ -486,6 +486,31 @@ SWAGGER_TEMPLATE = {
 
         # ── BATTLE ────────────────────────────────────────────────────────────
 
+        "/battleroom/battle/{battle_id}": {
+            "get": {
+                "tags": ["Battle"],
+                "summary": "Récupérer une battle par son identifiant",
+                "parameters": [{
+                    "in": "path", "name": "battle_id", "required": True,
+                    "type": "integer", "description": "Identifiant de la battle",
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Battle trouvée",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "id":          {"type": "integer"},
+                                "battleroom":  {"type": "integer"},
+                                "content":     {"type": "object"},
+                            },
+                        },
+                    },
+                    "404": {"description": "Battle introuvable"},
+                },
+            },
+        },
+
         "/battleroom/battle": {
             "get": {
                 "tags": ["Battle"],
