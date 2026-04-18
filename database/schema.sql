@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS battlerooms (
 CREATE TABLE IF NOT EXISTS battle (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
     battleroom  INTEGER NOT NULL,
-    finished INTEGER NOT NULL DEFAULT 0,
+    round       INTEGER NOT NULL DEFAULT 0,
+    finished    INTEGER NOT NULL DEFAULT 0,
     content     TEXT    NOT NULL DEFAULT '{}',   -- stocké en JSON (chaîne)
     FOREIGN KEY (battleroom) REFERENCES battlerooms(id) ON DELETE CASCADE
 );

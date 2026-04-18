@@ -15,17 +15,19 @@ def _row_to_battle(row) -> Battle:
     return Battle(
         id=row["id"],
         battleroom_id=row["battleroom"],
+        round=row["round"],
         finished=bool(row["finished"]),
         content=json.loads(row["content"]),
     )
 
 
-def create_battle(battleroom_id: int, content: dict[str, Any] | None = None, finished: bool = False, db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battle:
+def create_battle(battleroom_id: int, round: int, content: dict[str, Any] | None = None, finished: bool = False, db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battle:
     """
     Crée une nouvelle battle rattachée à une battleroom existante.
 
     Args:
         battleroom_id: Id de la battleroom parente (clé secondaire).
+        round:         Numéro du round auquel appartient cette battle.
         content:       Données initiales de la battle (dict sérialisé en JSON).
         finished:      True pour les byes, clôturés dès la création.
 
@@ -38,14 +40,15 @@ def create_battle(battleroom_id: int, content: dict[str, Any] | None = None, fin
     content = content or {}
     db: sqlite3.Connection = db_provider()
     cursor = db.execute(
-        "INSERT INTO battle (battleroom, finished, content) VALUES (?, ?, ?)",
-        (battleroom_id, int(finished), json.dumps(content)),
+        "INSERT INTO battle (battleroom, round, finished, content) VALUES (?, ?, ?, ?)",
+        (battleroom_id, round, int(finished), json.dumps(content)),
     )
     db.commit()
 
     return Battle(
         id=cursor.lastrowid,
         battleroom_id=battleroom_id,
+        round=round,
         finished=finished,
         content=content,
     )
@@ -60,26 +63,38 @@ def get_battle_by_id(battle_id: int, db_provider: Callable[[], sqlite3.Connectio
     """
     db: sqlite3.Connection = db_provider()
     row = db.execute(
-        "SELECT id, battleroom, finished, content FROM battle WHERE id = ?", (battle_id,)
+        "SELECT id, battleroom, round, finished, content FROM battle WHERE id = ?", (battle_id,)
     ).fetchone()
     if row is None:
         raise NotFoundError(f"Battle introuvable (id={battle_id}).")
     return _row_to_battle(row)
 
 
-def get_battles_by_room(battleroom_id: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> list[Battle]:
-    """Retourne toutes les battles d'une battleroom."""
+def get_battles_by_room(battleroom_id: int, round: int = -1, db_provider: Callable[[], sqlite3.Connection] = get_db) -> list[Battle]:
+    """
+    Retourne les battles d'une battleroom.
+
+    Args:
+        round: Si != -1, filtre par numéro de round.
+    """
     db: sqlite3.Connection = db_provider()
-    rows = db.execute(
-        "SELECT id, battleroom, finished, content FROM battle WHERE battleroom = ?", (battleroom_id,)
-    ).fetchall()
+    if round == -1:
+        rows = db.execute(
+            "SELECT id, battleroom, round, finished, content FROM battle WHERE battleroom = ?",
+            (battleroom_id,),
+        ).fetchall()
+    else:
+        rows = db.execute(
+            "SELECT id, battleroom, round, finished, content FROM battle WHERE battleroom = ? AND round = ?",
+            (battleroom_id, round),
+        ).fetchall()
     return [_row_to_battle(r) for r in rows]
 
 
 def get_all_battles(db_provider: Callable[[], sqlite3.Connection] = get_db) -> list[Battle]:
     """Retourne toutes les battles."""
     db: sqlite3.Connection = db_provider()
-    rows = db.execute("SELECT id, battleroom, finished, content FROM battle").fetchall()
+    rows = db.execute("SELECT id, battleroom, round, finished, content FROM battle").fetchall()
     return [_row_to_battle(r) for r in rows]
 
 
@@ -87,7 +102,7 @@ def get_battles_by_user(username: str, db_provider: Callable[[], sqlite3.Connect
     """Retourne les battles dont le contenu mentionne l'utilisateur."""
     db: sqlite3.Connection = db_provider()
     rows = db.execute(
-        "SELECT id, battleroom, finished, content FROM battle WHERE content LIKE ?",
+        "SELECT id, battleroom, round, finished, content FROM battle WHERE content LIKE ?",
         (f"%{username}%",),
     ).fetchall()
     return [_row_to_battle(r) for r in rows]
@@ -102,7 +117,7 @@ def set_champions_room_id(battle_id: int, champions_room_id: int, db_provider: C
     """
     db: sqlite3.Connection = db_provider()
     row = db.execute(
-        "SELECT id, battleroom, finished, content FROM battle WHERE id = ?", (battle_id,)
+        "SELECT id, battleroom, round, finished, content FROM battle WHERE id = ?", (battle_id,)
     ).fetchone()
     if row is None:
         raise NotFoundError(f"Battle introuvable (id={battle_id}).")
@@ -118,7 +133,9 @@ def set_champions_room_id(battle_id: int, champions_room_id: int, db_provider: C
         (json.dumps(content), battle_id),
     )
     db.commit()
-    return Battle(id=battle_id, battleroom_id=row["battleroom"], finished=bool(row["finished"]), content=content)
+    return _row_to_battle(db.execute(
+        "SELECT id, battleroom, round, finished, content FROM battle WHERE id = ?", (battle_id,)
+    ).fetchone())
 
 
 def end_battle(battle_id: int, result: dict[str, Any], db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battle:
@@ -130,7 +147,7 @@ def end_battle(battle_id: int, result: dict[str, Any], db_provider: Callable[[],
     """
     db: sqlite3.Connection = db_provider()
     row = db.execute(
-        "SELECT id, battleroom, content FROM battle WHERE id = ?", (battle_id,)
+        "SELECT id, battleroom, round, finished, content FROM battle WHERE id = ?", (battle_id,)
     ).fetchone()
     if row is None:
         raise NotFoundError(f"Battle introuvable (id={battle_id}).")
@@ -144,4 +161,4 @@ def end_battle(battle_id: int, result: dict[str, Any], db_provider: Callable[[],
         (json.dumps(existing), battle_id),
     )
     db.commit()
-    return Battle(id=battle_id, battleroom_id=row["battleroom"], finished=True, content=existing)
+    return Battle(id=battle_id, battleroom_id=row["battleroom"], round=row["round"], finished=True, content=existing)
