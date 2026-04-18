@@ -5,8 +5,9 @@ Préfixe : /battleroom
 
 from flask import Blueprint, jsonify, request
 
-import db_connector
 from controllers.decorators import require_admin_key, require_user_token
+from db_connector import battleroom_repository, battle_repository, user_repository
+from db_connector.exceptions import NotFoundError
 from db_connector.models import Battleroom
 from kchampions_core import make_pairings
 
@@ -25,16 +26,16 @@ def create():
     if not name:
         return jsonify({"error": "Le champ 'name' est requis"}), 400
 
-    battleroom: Battleroom = db_connector.create_battleroom(name)
+    battleroom: Battleroom = battleroom_repository.create_battleroom(name)
     return jsonify(battleroom), 201
 
 
 @battleroom_bp.route("/<room_id>", methods=["GET"])
 def get_room(room_id):
     try:
-        battleroom: Battleroom = db_connector.get_battleroom_by_id(room_id)
+        battleroom: Battleroom = battleroom_repository.get_battleroom_by_id(room_id)
         return jsonify(battleroom), 200
-    except db_connector.NotFoundError:
+    except NotFoundError:
         return jsonify({"error": "Battleroom introuvable"}), 404
 
 
@@ -52,8 +53,8 @@ def next_round():
 
     try:
         # 1. Récupère les joueurs et l'historique complet (matchs + byes)
-        players = db_connector.get_room_players(battleroom_id)
-        past_battles = db_connector.get_battles_by_room(battleroom_id)
+        players = battleroom_repository.get_room_players(battleroom_id)
+        past_battles = battle_repository.get_battles_by_room(battleroom_id)
         past_pairings = [
             (b.content["player1"], b.content.get("player2"))
             for b in past_battles
@@ -64,11 +65,11 @@ def next_round():
         pairings = make_pairings(players, past_pairings)
 
         # 3. Incrémente le round
-        battleroom = db_connector.next_battleroom_round(battleroom_id)
+        battleroom = battleroom_repository.next_battleroom_round(battleroom_id)
 
         # 4. Persiste les combats en base (player2=None pour les byes)
         battles = [
-            db_connector.create_battle(battleroom_id, {
+            battle_repository.create_battle(battleroom_id, {
                 "player1": p.player1,
                 "player2": p.player2,
                 "champions_room_id": None,
@@ -91,7 +92,7 @@ def next_round():
             ],
         }), 200
 
-    except db_connector.NotFoundError:
+    except NotFoundError:
         return jsonify({"error": "Battleroom introuvable"}), 404
 
 
@@ -109,9 +110,9 @@ def enter():
         return jsonify({"error": "Les champs 'battleroom_id' et 'username' sont requis"}), 400
 
     try:
-        db_connector.enter_battleroom(battleroom_id, username)
+        battleroom_repository.enter_battleroom(battleroom_id, username)
         return jsonify({"message": f"{username} a rejoint la battleroom {battleroom_id}"}), 200
-    except db_connector.NotFoundError:
+    except NotFoundError:
         return jsonify({"error": "Battleroom introuvable"}), 404
 
 
@@ -128,9 +129,9 @@ def end_room():
         return jsonify({"error": "Le champ 'battleroom_id' est requis"}), 400
 
     try:
-        db_connector.delete_battleroom(battleroom_id)
+        battleroom_repository.delete_battleroom(battleroom_id)
         return jsonify({"message": f"Battleroom {battleroom_id} terminée et supprimée"}), 200
-    except db_connector.NotFoundError:
+    except NotFoundError:
         return jsonify({"error": "Battleroom introuvable"}), 404
 
 
@@ -140,7 +141,7 @@ def end_room():
 # ------------------------------------------------------------------
 @battleroom_bp.route("/battle", methods=["GET"])
 def get_all_battles():
-    battles = db_connector.get_all_battles()
+    battles = battle_repository.get_all_battles()
     return jsonify([
         {"id": b.id, "battleroom": b.battleroom_id, "content": b.content}
         for b in battles
@@ -154,11 +155,11 @@ def get_all_battles():
 @battleroom_bp.route("/battle/<string:user>", methods=["GET"])
 def get_battle_by_user(user: str):
     try:
-        db_connector.get_user(user)
-    except db_connector.NotFoundError:
+        user_repository.get_user(user)
+    except NotFoundError:
         return jsonify({"error": "Utilisateur introuvable"}), 404
 
-    battles = db_connector.get_battles_by_user(user)
+    battles = battle_repository.get_battles_by_user(user)
     return jsonify({
         "user": user,
         "battles": [
@@ -192,15 +193,15 @@ def set_battle_room():
         return jsonify({"error": "'champions_room_id' doit être un code à 8 chiffres"}), 400
 
     try:
-        battle = db_connector.get_battle_by_id(battle_id)
-    except db_connector.NotFoundError:
+        battle = battle_repository.get_battle_by_id(battle_id)
+    except NotFoundError:
         return jsonify({"error": "Battle introuvable"}), 404
 
     content = battle.content
     if g.current_user not in (content.get("player1"), content.get("player2")):
         return jsonify({"error": f"'{g.current_user}' n'est pas participant de cette battle."}), 403
 
-    battle = db_connector.set_champions_room_id(battle_id, code)
+    battle = battle_repository.set_champions_room_id(battle_id, code)
     return jsonify({
         "battle_id": battle.id,
         "champions_room_id": battle.content["champions_room_id"],
@@ -219,7 +220,7 @@ def end_battle():
         return jsonify({"error": "Le champ 'battle_id' est requis"}), 400
 
     try:
-        battle = db_connector.end_battle(battle_id, data.get("result", {}))
+        battle = battle_repository.end_battle(battle_id, data.get("result", {}))
         return jsonify({"battle_id": battle.id, "content": battle.content}), 200
-    except db_connector.NotFoundError:
+    except NotFoundError:
         return jsonify({"error": "Battle introuvable"}), 404
