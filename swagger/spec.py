@@ -544,7 +544,9 @@ SWAGGER_TEMPLATE = {
         "/battleroom/battle/end": {
             "post": {
                 "tags": ["Battle"],
-                "summary": "Clôturer une battle",
+                "summary": "Clôturer une battle (admin ou participant)",
+                "description": "Accessible par la clé admin (X-Admin-Key) ou par un des deux participants via token Bearer.",
+                "security": [{"AdminKey": []}, {"BearerAuth": []}],
                 "parameters": [{
                     "in": "body", "name": "body", "required": True,
                     "schema": {
@@ -571,6 +573,8 @@ SWAGGER_TEMPLATE = {
                         },
                     },
                     "400": {"description": "Champ 'battle_id' manquant"},
+                    "401": {"description": "Authentification manquante ou invalide"},
+                    "403": {"description": "Utilisateur non participant de cette battle"},
                     "404": {"description": "Battle introuvable"},
                 },
             },

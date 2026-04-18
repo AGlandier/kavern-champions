@@ -31,3 +31,27 @@ def require_user_token(f):
         g.current_user = name
         return f(*args, **kwargs)
     return decorated
+
+
+def require_admin_or_user_token(f):
+    """Décorateur — accepte la clé admin OU un token Bearer valide.
+
+    Expose g.is_admin (bool) et g.current_user (str | None).
+    """
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if request.headers.get("X-Admin-Key", "") == current_app.config["ADMIN_KEY"]:
+            g.is_admin = True
+            g.current_user = None
+            return f(*args, **kwargs)
+
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            name = verify_user_token(auth_header[7:])
+            if name is not None:
+                g.is_admin = False
+                g.current_user = name
+                return f(*args, **kwargs)
+
+        return jsonify({"error": "Authentification requise (clé admin ou token Bearer valide)"}), 401
+    return decorated

@@ -5,7 +5,7 @@ Préfixe : /battleroom
 
 from flask import Blueprint, jsonify, request
 
-from controllers.decorators import require_admin_key, require_user_token
+from controllers.decorators import require_admin_key, require_user_token, require_admin_or_user_token
 from db_connector import battleroom_repository, battle_repository, user_repository
 from db_connector.exceptions import NotFoundError
 from db_connector.models import Battleroom
@@ -252,14 +252,23 @@ def set_battle_room():
 # Clôture une battle (enregistre le résultat)
 # ------------------------------------------------------------------
 @battleroom_bp.route("/battle/end", methods=["POST"])
+@require_admin_or_user_token
 def end_battle():
+    from flask import g
     data = request.get_json(silent=True) or {}
     battle_id = data.get("battle_id")
     if battle_id is None:
         return jsonify({"error": "Le champ 'battle_id' est requis"}), 400
 
     try:
-        battle = battle_repository.end_battle(battle_id, data.get("result", {}))
-        return jsonify({"battle_id": battle.id, "content": battle.content}), 200
+        battle = battle_repository.get_battle_by_id(battle_id)
     except NotFoundError:
         return jsonify({"error": "Battle introuvable"}), 404
+
+    if not g.is_admin:
+        content = battle.content
+        if g.current_user not in (content.get("player1"), content.get("player2")):
+            return jsonify({"error": f"'{g.current_user}' n'est pas participant de cette battle."}), 403
+
+    battle = battle_repository.end_battle(battle_id, data.get("result", {}))
+    return jsonify({"battle_id": battle.id, "content": battle.content}), 200
