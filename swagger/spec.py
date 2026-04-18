@@ -216,14 +216,13 @@ SWAGGER_TEMPLATE = {
         "/user/teamlist": {
             "post": {
                 "tags": ["Utilisateur"],
-                "summary": "Mettre à jour la teamlist",
+                "summary": "Mettre à jour la teamlist (utilisateur authentifié)",
+                "security": [{"BearerAuth": []}],
                 "parameters": [{
                     "in": "body", "name": "body", "required": True,
                     "schema": {
                         "type": "object",
-                        "required": ["name"],
                         "properties": {
-                            "name": {"type": "string", "example": "Sacha"},
                             "teamlist": {"type": "string", "example": "Pikachu, Évoli"},
                         },
                     },
@@ -239,7 +238,7 @@ SWAGGER_TEMPLATE = {
                             },
                         },
                     },
-                    "400": {"description": "Champ 'name' manquant"},
+                    "401": {"description": "Token manquant ou invalide"},
                     "404": {"description": "Utilisateur introuvable"},
                 },
             },
