@@ -52,3 +52,59 @@ def create_battle(battleroom_id: int, content: dict[str, Any] | None = None) -> 
         battleroom_id=battleroom_id,
         content=content,
     )
+
+
+def get_all_battles() -> list[Battle]:
+    """Retourne toutes les battles."""
+    db: sqlite3.Connection = get_db()
+    rows = db.execute("SELECT id, battleroom, content FROM battle").fetchall()
+    return [
+        Battle(id=r["id"], battleroom_id=r["battleroom"], content=json.loads(r["content"]))
+        for r in rows
+    ]
+
+
+def get_battles_by_user(username: str) -> list[Battle]:
+    """
+    Retourne les battles dont le contenu mentionne l'utilisateur.
+
+    Raises:
+        NotFoundError: Si l'utilisateur n'existe pas.
+    """
+    db: sqlite3.Connection = get_db()
+    if db.execute("SELECT name FROM user WHERE name = ?", (username,)).fetchone() is None:
+        raise NotFoundError(f"Utilisateur '{username}' introuvable.")
+    rows = db.execute(
+        "SELECT id, battleroom, content FROM battle WHERE content LIKE ?",
+        (f"%{username}%",),
+    ).fetchall()
+    return [
+        Battle(id=r["id"], battleroom_id=r["battleroom"], content=json.loads(r["content"]))
+        for r in rows
+    ]
+
+
+def end_battle(battle_id: int, result: dict[str, Any]) -> Battle:
+    """
+    Clôture une battle en fusionnant le résultat dans son contenu JSON.
+
+    Raises:
+        NotFoundError: Si la battle n'existe pas.
+    """
+    db: sqlite3.Connection = get_db()
+    row = db.execute(
+        "SELECT id, battleroom, content FROM battle WHERE id = ?", (battle_id,)
+    ).fetchone()
+    if row is None:
+        raise NotFoundError(f"Battle introuvable (id={battle_id}).")
+    try:
+        existing = json.loads(row["content"])
+    except json.JSONDecodeError:
+        existing = {}
+    existing.update({"status": "ended", "result": result})
+    db.execute(
+        "UPDATE battle SET content = ? WHERE id = ?",
+        (json.dumps(existing), battle_id),
+    )
+    db.commit()
+    return Battle(id=battle_id, battleroom_id=row["battleroom"], content=existing)

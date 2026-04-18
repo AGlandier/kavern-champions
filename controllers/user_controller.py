@@ -4,8 +4,7 @@ Préfixe : /user
 """
 
 from flask import Blueprint, jsonify, request
-from database.db import get_db
-from db_connector import update_user_teamlist, NotFoundError
+from db_connector import get_user, update_user_teamlist, NotFoundError
 
 user_bp = Blueprint("user", __name__)
 
@@ -20,20 +19,15 @@ def get_stats():
     if not username:
         return jsonify({"error": "Le paramètre de requête 'name' est requis"}), 400
 
-    db = get_db()
-    row = db.execute(
-        "SELECT name, teamlist, number_battle FROM user WHERE name = ?", (username,)
-    ).fetchone()
-    if row is None:
+    try:
+        user = get_user(username)
+        return jsonify({
+            "name": user.name,
+            "teamlist": user.teamlist,
+            "number_battle": user.number_battle,
+        }), 200
+    except NotFoundError:
         return jsonify({"error": "Utilisateur introuvable"}), 404
-
-    return jsonify(
-        {
-            "name": row["name"],
-            "teamlist": row["teamlist"],
-            "number_battle": row["number_battle"],
-        }
-    ), 200
 
 
 # ------------------------------------------------------------------
