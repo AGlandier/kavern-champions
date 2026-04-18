@@ -3,6 +3,7 @@ user_repository.py — Opérations CRUD sur la table `user`.
 """
 
 import sqlite3
+from werkzeug.security import generate_password_hash, check_password_hash
 from database.db import get_db
 from db_connector.models import User
 from db_connector.exceptions import NotFoundError, DuplicateError
@@ -74,3 +75,62 @@ def get_user(name: str) -> User:
         teamlist=row["teamlist"],
         number_battle=row["number_battle"],
     )
+
+
+def update_user_teamlist(name: str, teamlist: str) -> User:
+    """
+    Met à jour la teamlist d'un utilisateur.
+
+    Returns:
+        User mis à jour.
+
+    Raises:
+        NotFoundError: Si l'utilisateur n'existe pas.
+    """
+    name = name.strip()
+    db: sqlite3.Connection = get_db()
+    row = db.execute("SELECT name FROM user WHERE name = ?", (name,)).fetchone()
+    if row is None:
+        raise NotFoundError(f"Utilisateur '{name}' introuvable.")
+    db.execute("UPDATE user SET teamlist = ? WHERE name = ?", (teamlist, name))
+    db.commit()
+    return get_user(name)
+
+
+def user_has_password(name: str) -> bool:
+    """Retourne True si l'utilisateur a un mot de passe défini."""
+    db: sqlite3.Connection = get_db()
+    row = db.execute(
+        "SELECT password_hash FROM user WHERE name = ?", (name.strip(),)
+    ).fetchone()
+    return row is not None and row["password_hash"] is not None
+
+
+def set_user_password(name: str, password: str) -> None:
+    """
+    Hash et enregistre le mot de passe de l'utilisateur.
+
+    Raises:
+        NotFoundError: Si l'utilisateur n'existe pas.
+    """
+    name = name.strip()
+    db: sqlite3.Connection = get_db()
+    row = db.execute("SELECT name FROM user WHERE name = ?", (name,)).fetchone()
+    if row is None:
+        raise NotFoundError(f"Utilisateur '{name}' introuvable.")
+    db.execute(
+        "UPDATE user SET password_hash = ? WHERE name = ?",
+        (generate_password_hash(password), name),
+    )
+    db.commit()
+
+
+def check_user_password(name: str, password: str) -> bool:
+    """Retourne True si le mot de passe correspond au hash stocké."""
+    db: sqlite3.Connection = get_db()
+    row = db.execute(
+        "SELECT password_hash FROM user WHERE name = ?", (name.strip(),)
+    ).fetchone()
+    if row is None or row["password_hash"] is None:
+        return False
+    return check_password_hash(row["password_hash"], password)

@@ -6,6 +6,10 @@ from .battle_repository import create_battle
 from .user_repository import (
     create_user,
     get_user,
+    update_user_teamlist,
+    user_has_password,
+    set_user_password,
+    check_user_password,
 )
 from .exceptions import NotFoundError, DuplicateError
 
@@ -15,6 +19,10 @@ __all__ = [
     "create_battle",
     "create_user",
     "get_user",
+    "update_user_teamlist",
+    "user_has_password",
+    "set_user_password",
+    "check_user_password",
     "NotFoundError",
-    "DuplicateError"
+    "DuplicateError",
 ]

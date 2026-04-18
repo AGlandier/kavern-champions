@@ -22,5 +22,6 @@ CREATE TABLE IF NOT EXISTS battle (
 CREATE TABLE IF NOT EXISTS user (
     name           TEXT    PRIMARY KEY,          -- clé primaire unique, chaîne
     teamlist       TEXT    NOT NULL DEFAULT '',
-    number_battle  INTEGER NOT NULL DEFAULT 0
+    number_battle  INTEGER NOT NULL DEFAULT 0,
+    password_hash  TEXT                          -- NULL = pas de mot de passe défini
 );

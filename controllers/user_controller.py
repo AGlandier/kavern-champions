@@ -5,6 +5,7 @@ Préfixe : /user
 
 from flask import Blueprint, jsonify, request
 from database.db import get_db
+from db_connector import update_user_teamlist, NotFoundError
 
 user_bp = Blueprint("user", __name__)
 
@@ -48,13 +49,8 @@ def update_teamlist():
     if not username:
         return jsonify({"error": "Le champ 'name' est requis"}), 400
 
-    db = get_db()
-    row = db.execute("SELECT name FROM user WHERE name = ?", (username,)).fetchone()
-    if row is None:
+    try:
+        user = update_user_teamlist(username, teamlist)
+        return jsonify({"name": user.name, "teamlist": user.teamlist}), 200
+    except NotFoundError:
         return jsonify({"error": "Utilisateur introuvable"}), 404
-
-    db.execute(
-        "UPDATE user SET teamlist = ? WHERE name = ?", (teamlist, username)
-    )
-    db.commit()
-    return jsonify({"name": username, "teamlist": teamlist}), 200
