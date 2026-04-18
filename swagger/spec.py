@@ -315,6 +315,39 @@ SWAGGER_TEMPLATE = {
             },
         },
 
+        "/battleroom/{room_id}/battles": {
+            "get": {
+                "tags": ["Battleroom"],
+                "summary": "Lister les battles d'une battleroom",
+                "parameters": [{
+                    "in": "path", "name": "room_id", "required": True,
+                    "type": "integer", "description": "Identifiant de la battleroom",
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Liste des battles",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "battleroom_id": {"type": "integer"},
+                                "battles": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id":      {"type": "integer"},
+                                            "content": {"type": "object"},
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    "404": {"description": "Battleroom introuvable"},
+                },
+            },
+        },
+
         "/battleroom/{room_id}/players": {
             "get": {
                 "tags": ["Battleroom"],
