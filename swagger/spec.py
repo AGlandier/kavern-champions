@@ -247,6 +247,30 @@ SWAGGER_TEMPLATE = {
 
         # ── BATTLEROOM ────────────────────────────────────────────────────────
 
+        "/battleroom/": {
+            "get": {
+                "tags": ["Battleroom"],
+                "summary": "Lister toutes les battlerooms",
+                "responses": {
+                    "200": {
+                        "description": "Liste des battlerooms",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id":    {"type": "integer"},
+                                    "name":  {"type": "string"},
+                                    "date":  {"type": "string"},
+                                    "round": {"type": "integer"},
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+
         "/battleroom/create": {
             "post": {
                 "tags": ["Battleroom"],
