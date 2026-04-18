@@ -12,6 +12,7 @@ from db_connector import (
     NotFoundError,
     DuplicateError,
 )
+
 from controllers.auth import make_user_token, verify_user_token
 
 auth_bp = Blueprint("auth", __name__)
@@ -25,11 +26,16 @@ auth_bp = Blueprint("auth", __name__)
 def register():
     data = request.get_json(silent=True) or {}
     name = data.get("name", "").strip()
+    password = data.get("password", "")
+
     if not name:
         return jsonify({"error": "Le champ 'name' est requis"}), 400
+
     try:
         user = create_user(name)
-        return jsonify({"name": user.name}), 201
+        if password:
+            set_user_password(name, password)
+        return jsonify({"name": user.name, "secured": bool(password)}), 201
     except DuplicateError:
         return jsonify({"error": f"L'utilisateur '{name}' existe déjà"}), 409
 

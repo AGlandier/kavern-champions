@@ -4,9 +4,27 @@ Préfixe : /user
 """
 
 from flask import Blueprint, jsonify, request
-from db_connector import get_user, update_user_teamlist, NotFoundError
+from db_connector import get_user, update_user_teamlist, user_has_password, NotFoundError, DuplicateError
 
 user_bp = Blueprint("user", __name__)
+
+
+# ------------------------------------------------------------------
+# GET /user/secured
+# Indique si un utilisateur a un mot de passe défini
+# ------------------------------------------------------------------
+@user_bp.route("/secured", methods=["GET"])
+def is_secured():
+    username = request.args.get("name", "").strip()
+    if not username:
+        return jsonify({"error": "Le paramètre de requête 'name' est requis"}), 400
+
+    try:
+        get_user(username)  # vérifie l'existence
+    except NotFoundError:
+        return jsonify({"error": "Utilisateur introuvable"}), 404
+
+    return jsonify({"name": username, "secured": user_has_password(username)}), 200
 
 
 # ------------------------------------------------------------------

@@ -24,7 +24,7 @@ SWAGGER_TEMPLATE = {
             "type": "apiKey",
             "in": "header",
             "name": "Authorization",
-            "description": "Token utilisateur au format `Bearer <token>`",
+            "description": "Saisir **`Bearer <token>`** (avec le préfixe) — exemple : `Bearer eyJhbGc...`",
         },
     },
     "tags": [
@@ -42,8 +42,9 @@ SWAGGER_TEMPLATE = {
                 "tags": ["Authentification"],
                 "summary": "Inscrire un nouvel utilisateur",
                 "description": (
-                    "Crée un compte avec un nom d'utilisateur uniquement. "
-                    "Aucun mot de passe n'est requis à l'inscription."
+                    "Crée un compte avec un nom d'utilisateur. "
+                    "Le mot de passe est optionnel : s'il est fourni, le compte est immédiatement sécurisé. "
+                    "Sans mot de passe, le compte peut en définir un ultérieurement via /auth/set-password."
                 ),
                 "parameters": [{
                     "in": "body", "name": "body", "required": True,
@@ -52,6 +53,11 @@ SWAGGER_TEMPLATE = {
                         "required": ["name"],
                         "properties": {
                             "name": {"type": "string", "example": "Sacha"},
+                            "password": {
+                                "type": "string",
+                                "example": "monMotDePasse",
+                                "description": "Optionnel — sécurise le compte dès l'inscription",
+                            },
                         },
                     },
                 }],
@@ -60,7 +66,13 @@ SWAGGER_TEMPLATE = {
                         "description": "Utilisateur créé",
                         "schema": {
                             "type": "object",
-                            "properties": {"name": {"type": "string"}},
+                            "properties": {
+                                "name": {"type": "string"},
+                                "secured": {
+                                    "type": "boolean",
+                                    "description": "True si un mot de passe a été défini à l'inscription",
+                                },
+                            },
                         },
                     },
                     "400": {"description": "Champ 'name' manquant"},
@@ -155,6 +167,32 @@ SWAGGER_TEMPLATE = {
         },
 
         # ── USER ─────────────────────────────────────────────────────────────
+
+        "/user/secured": {
+            "get": {
+                "tags": ["Utilisateur"],
+                "summary": "Vérifier si un utilisateur a un mot de passe",
+                "description": "Retourne un booléen indiquant si le compte est sécurisé par un mot de passe.",
+                "parameters": [{
+                    "in": "query", "name": "name", "required": True,
+                    "type": "string", "description": "Nom de l'utilisateur",
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Statut de sécurisation",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "secured": {"type": "boolean"},
+                            },
+                        },
+                    },
+                    "400": {"description": "Paramètre 'name' manquant"},
+                    "404": {"description": "Utilisateur introuvable"},
+                },
+            },
+        },
 
         "/user/stats": {
             "get": {
@@ -376,6 +414,50 @@ SWAGGER_TEMPLATE = {
                         },
                     },
                     "404": {"description": "Utilisateur introuvable"},
+                },
+            },
+        },
+
+        "/battleroom/battle/set-room": {
+            "post": {
+                "tags": ["Battle"],
+                "summary": "Renseigner le code champions_room_id",
+                "description": (
+                    "Permet à un participant authentifié de saisir le code à 8 chiffres "
+                    "de la salle de combat. Seuls player1 et player2 de la battle peuvent "
+                    "effectuer cette action."
+                ),
+                "security": [{"BearerAuth": []}],
+                "parameters": [{
+                    "in": "body", "name": "body", "required": True,
+                    "schema": {
+                        "type": "object",
+                        "required": ["battle_id", "champions_room_id"],
+                        "properties": {
+                            "battle_id": {"type": "integer", "example": 1},
+                            "champions_room_id": {
+                                "type": "integer",
+                                "example": 12345678,
+                                "description": "Code à 8 chiffres (10000000–99999999)",
+                            },
+                        },
+                    },
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Code enregistré",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "battle_id": {"type": "integer"},
+                                "champions_room_id": {"type": "integer"},
+                            },
+                        },
+                    },
+                    "400": {"description": "Champs requis manquants ou code invalide"},
+                    "401": {"description": "Token manquant ou invalide"},
+                    "403": {"description": "L'utilisateur n'est pas participant de cette battle"},
+                    "404": {"description": "Battle introuvable"},
                 },
             },
         },
