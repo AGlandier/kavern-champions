@@ -1,0 +1,13 @@
+# Environnement
+.env
+*.db
+
+#Pycharm
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+contexts/

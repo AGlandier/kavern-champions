@@ -1,0 +1,75 @@
+"""
+battleroom_repository.py — Opérations CRUD sur la table `battlerooms`.
+"""
+
+import sqlite3
+from database.db import get_db
+from db_connector.models import Battleroom
+from db_connector.exceptions import NotFoundError
+
+
+def create_battleroom(name: str) -> Battleroom:
+    """
+    Insère une nouvelle battleroom en base.
+
+    Args:
+        name: Nom de la battleroom (non vide).
+
+    Returns:
+        Battleroom créée avec son id généré et round initialisé à 0.
+
+    Raises:
+        ValueError: Si le nom est vide.
+    """
+    name = name.strip()
+    if not name:
+        raise ValueError("Le nom de la battleroom ne peut pas être vide.")
+
+    db: sqlite3.Connection = get_db()
+    cursor = db.execute(
+        "INSERT INTO battlerooms (name) VALUES (?)",
+        (name,),
+    )
+    db.commit()
+
+    row = db.execute(
+        "SELECT id, name, date, round FROM battlerooms WHERE id = ?",
+        (cursor.lastrowid,),
+    ).fetchone()
+
+    return Battleroom(
+        id=row["id"],
+        name=row["name"],
+        date=row["date"],
+        round=row["round"],
+    )
+
+
+def get_battleroom_by_id(battleroom_id: int) -> Battleroom:
+    """
+    Récupère une battleroom par son identifiant.
+
+    Args:
+        battleroom_id: Identifiant entier de la battleroom.
+
+    Returns:
+        Battleroom correspondante.
+
+    Raises:
+        NotFoundError: Si aucune battleroom ne correspond à cet id.
+    """
+    db: sqlite3.Connection = get_db()
+    row = db.execute(
+        "SELECT id, name, date, round FROM battlerooms WHERE id = ?",
+        (battleroom_id,),
+    ).fetchone()
+
+    if row is None:
+        raise NotFoundError(f"Battleroom introuvable (id={battleroom_id}).")
+
+    return Battleroom(
+        id=row["id"],
+        name=row["name"],
+        date=row["date"],
+        round=row["round"],
+    )
