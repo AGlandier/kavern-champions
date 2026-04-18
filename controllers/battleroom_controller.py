@@ -157,6 +157,27 @@ def enter():
 
 
 # ------------------------------------------------------------------
+# GET /battleroom/<room_id>/battles
+# Retourne les battles d'une battleroom
+# ------------------------------------------------------------------
+@battleroom_bp.route("/<int:room_id>/battles", methods=["GET"])
+def get_battles_by_room(room_id: int):
+    try:
+        battleroom_repository.get_battleroom_by_id(room_id)
+    except NotFoundError:
+        return jsonify({"error": "Battleroom introuvable"}), 404
+
+    battles = battle_repository.get_battles_by_room(room_id)
+    return jsonify({
+        "battleroom_id": room_id,
+        "battles": [
+            {"id": b.id, "content": b.content}
+            for b in battles
+        ],
+    }), 200
+
+
+# ------------------------------------------------------------------
 # POST /battleroom/end  (admin)
 # Termine une battleroom
 # ------------------------------------------------------------------
