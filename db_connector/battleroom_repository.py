@@ -98,8 +98,12 @@ def next_battleroom_round(battleroom_id: int) -> Battleroom:
 
 def enter_battleroom(battleroom_id: int, username: str) -> None:
     """
-    Fait entrer un utilisateur dans une battleroom.
-    Crée l'utilisateur en base s'il n'existe pas encore.
+    Enregistre la participation d'un joueur à une battleroom.
+
+    Si l'utilisateur n'existe pas encore en base, il est créé automatiquement.
+    Ce comportement est intentionnel : les joueurs rejoignent depuis un live Twitch
+    via leur pseudo Twitch (transmis par bot/API), sans inscription préalable sur
+    le site. Le pseudo Twitch fait office de clé primaire fiable.
 
     Raises:
         NotFoundError: Si la battleroom n'existe pas.

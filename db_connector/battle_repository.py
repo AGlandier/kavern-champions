@@ -77,15 +77,8 @@ def get_all_battles() -> list[Battle]:
 
 
 def get_battles_by_user(username: str) -> list[Battle]:
-    """
-    Retourne les battles dont le contenu mentionne l'utilisateur.
-
-    Raises:
-        NotFoundError: Si l'utilisateur n'existe pas.
-    """
+    """Retourne les battles dont le contenu mentionne l'utilisateur."""
     db: sqlite3.Connection = get_db()
-    if db.execute("SELECT name FROM user WHERE name = ?", (username,)).fetchone() is None:
-        raise NotFoundError(f"Utilisateur '{username}' introuvable.")
     rows = db.execute(
         "SELECT id, battleroom, content FROM battle WHERE content LIKE ?",
         (f"%{username}%",),

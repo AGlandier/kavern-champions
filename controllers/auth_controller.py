@@ -13,7 +13,7 @@ from db_connector import (
     DuplicateError,
 )
 
-from controllers.auth import make_user_token, verify_user_token
+from services.token_service import make_user_token, verify_user_token
 
 auth_bp = Blueprint("auth", __name__)
 

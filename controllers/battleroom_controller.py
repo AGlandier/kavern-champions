@@ -6,7 +6,7 @@ Préfixe : /battleroom
 from flask import Blueprint, jsonify, request
 
 import db_connector
-from controllers.auth import require_admin_key, require_user_token
+from controllers.decorators import require_admin_key, require_user_token
 from db_connector.models import Battleroom
 from kchampions_core import make_pairings
 
@@ -154,16 +154,18 @@ def get_all_battles():
 @battleroom_bp.route("/battle/<string:user>", methods=["GET"])
 def get_battle_by_user(user: str):
     try:
-        battles = db_connector.get_battles_by_user(user)
-        return jsonify({
-            "user": user,
-            "battles": [
-                {"id": b.id, "battleroom": b.battleroom_id, "content": b.content}
-                for b in battles
-            ],
-        }), 200
+        db_connector.get_user(user)
     except db_connector.NotFoundError:
         return jsonify({"error": "Utilisateur introuvable"}), 404
+
+    battles = db_connector.get_battles_by_user(user)
+    return jsonify({
+        "user": user,
+        "battles": [
+            {"id": b.id, "battleroom": b.battleroom_id, "content": b.content}
+            for b in battles
+        ],
+    }), 200
 
 
 # ------------------------------------------------------------------
