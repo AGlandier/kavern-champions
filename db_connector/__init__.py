@@ -3,12 +3,15 @@ from .battleroom_repository import (
     get_battleroom_by_id,
     next_battleroom_round,
     enter_battleroom,
+    get_room_players,
     delete_battleroom,
 )
 from .battle_repository import (
     create_battle,
+    get_battles_by_room,
     get_all_battles,
     get_battles_by_user,
+    set_champions_room_id,
     end_battle,
 )
 from .user_repository import (
@@ -26,10 +29,13 @@ __all__ = [
     "get_battleroom_by_id",
     "next_battleroom_round",
     "enter_battleroom",
+    "get_room_players",
     "delete_battleroom",
     "create_battle",
+    "get_battles_by_room",
     "get_all_battles",
     "get_battles_by_user",
+    "set_champions_room_id",
     "end_battle",
     "create_user",
     "get_user",

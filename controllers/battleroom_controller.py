@@ -6,8 +6,9 @@ Préfixe : /battleroom
 from flask import Blueprint, jsonify, request
 
 import db_connector
-from controllers.auth import require_admin_key
+from controllers.auth import require_admin_key, require_user_token
 from db_connector.models import Battleroom
+from kchampions_core import make_pairings
 
 battleroom_bp = Blueprint("battleroom", __name__)
 
@@ -50,8 +51,45 @@ def next_round():
         return jsonify({"error": "Le champ 'battleroom_id' est requis"}), 400
 
     try:
+        # 1. Récupère les joueurs et les appariements passés
+        players = db_connector.get_room_players(battleroom_id)
+        past_battles = db_connector.get_battles_by_room(battleroom_id)
+        past_pairings = [
+            (b.content["player1"], b.content["player2"])
+            for b in past_battles
+            if "player1" in b.content and "player2" in b.content
+        ]
+
+        # 2. Génère les appariements via le core (aucun I/O)
+        pairings = make_pairings(players, past_pairings)
+
+        # 3. Incrémente le round
         battleroom = db_connector.next_battleroom_round(battleroom_id)
-        return jsonify({"battleroom_id": battleroom.id, "round": battleroom.round}), 200
+
+        # 4. Persiste les combats en base
+        battles = [
+            db_connector.create_battle(battleroom_id, {
+                "player1": p.player1,
+                "player2": p.player2,
+                "champions_room_id": None,
+            })
+            for p in pairings
+        ]
+
+        return jsonify({
+            "battleroom_id": battleroom.id,
+            "round": battleroom.round,
+            "battles": [
+                {
+                    "id": b.id,
+                    "player1": b.content["player1"],
+                    "player2": b.content["player2"],
+                    "champions_room_id": b.content["champions_room_id"],
+                }
+                for b in battles
+            ],
+        }), 200
+
     except db_connector.NotFoundError:
         return jsonify({"error": "Battleroom introuvable"}), 404
 
@@ -125,6 +163,41 @@ def get_battle_by_user(user: str):
         }), 200
     except db_connector.NotFoundError:
         return jsonify({"error": "Utilisateur introuvable"}), 404
+
+
+# ------------------------------------------------------------------
+# POST /battleroom/battle/set-room
+# Renseigne le champions_room_id d'une battle (participant authentifié)
+# ------------------------------------------------------------------
+@battleroom_bp.route("/battle/set-room", methods=["POST"])
+@require_user_token
+def set_battle_room():
+    from flask import g
+    data = request.get_json(silent=True) or {}
+    battle_id = data.get("battle_id")
+    code = data.get("champions_room_id")
+
+    if battle_id is None or code is None:
+        return jsonify({"error": "Les champs 'battle_id' et 'champions_room_id' sont requis"}), 400
+
+    try:
+        code = int(code)
+    except (TypeError, ValueError):
+        return jsonify({"error": "'champions_room_id' doit être un entier"}), 400
+
+    if not (10_000_000 <= code <= 99_999_999):
+        return jsonify({"error": "'champions_room_id' doit être un code à 8 chiffres"}), 400
+
+    try:
+        battle = db_connector.set_champions_room_id(battle_id, code, g.current_user)
+        return jsonify({
+            "battle_id": battle.id,
+            "champions_room_id": battle.content["champions_room_id"],
+        }), 200
+    except db_connector.NotFoundError:
+        return jsonify({"error": "Battle introuvable"}), 404
+    except PermissionError as e:
+        return jsonify({"error": str(e)}), 403
 
 
 # ------------------------------------------------------------------

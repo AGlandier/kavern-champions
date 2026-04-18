@@ -54,6 +54,18 @@ def create_battle(battleroom_id: int, content: dict[str, Any] | None = None) -> 
     )
 
 
+def get_battles_by_room(battleroom_id: int) -> list[Battle]:
+    """Retourne toutes les battles d'une battleroom."""
+    db: sqlite3.Connection = get_db()
+    rows = db.execute(
+        "SELECT id, battleroom, content FROM battle WHERE battleroom = ?", (battleroom_id,)
+    ).fetchall()
+    return [
+        Battle(id=r["id"], battleroom_id=r["battleroom"], content=json.loads(r["content"]))
+        for r in rows
+    ]
+
+
 def get_all_battles() -> list[Battle]:
     """Retourne toutes les battles."""
     db: sqlite3.Connection = get_db()
@@ -82,6 +94,40 @@ def get_battles_by_user(username: str) -> list[Battle]:
         Battle(id=r["id"], battleroom_id=r["battleroom"], content=json.loads(r["content"]))
         for r in rows
     ]
+
+
+def set_champions_room_id(battle_id: int, champions_room_id: int, username: str) -> Battle:
+    """
+    Renseigne le champions_room_id d'une battle.
+
+    Seul un des deux participants (player1 ou player2) peut effectuer cette action.
+
+    Raises:
+        NotFoundError:  Si la battle n'existe pas.
+        PermissionError: Si l'utilisateur n'est pas participant de la battle.
+    """
+    db: sqlite3.Connection = get_db()
+    row = db.execute(
+        "SELECT id, battleroom, content FROM battle WHERE id = ?", (battle_id,)
+    ).fetchone()
+    if row is None:
+        raise NotFoundError(f"Battle introuvable (id={battle_id}).")
+
+    try:
+        content = json.loads(row["content"])
+    except json.JSONDecodeError:
+        content = {}
+
+    if username not in (content.get("player1"), content.get("player2")):
+        raise PermissionError(f"'{username}' n'est pas participant de cette battle.")
+
+    content["champions_room_id"] = champions_room_id
+    db.execute(
+        "UPDATE battle SET content = ? WHERE id = ?",
+        (json.dumps(content), battle_id),
+    )
+    db.commit()
+    return Battle(id=battle_id, battleroom_id=row["battleroom"], content=content)
 
 
 def end_battle(battle_id: int, result: dict[str, Any]) -> Battle:

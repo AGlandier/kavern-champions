@@ -111,7 +111,27 @@ def enter_battleroom(battleroom_id: int, username: str) -> None:
     if room is None:
         raise NotFoundError(f"Battleroom introuvable (id={battleroom_id}).")
     db.execute("INSERT OR IGNORE INTO user (name) VALUES (?)", (username,))
+    db.execute(
+        "INSERT OR IGNORE INTO battleroom_players (battleroom_id, username) VALUES (?, ?)",
+        (battleroom_id, username),
+    )
     db.commit()
+
+
+def get_room_players(battleroom_id: int) -> list[str]:
+    """
+    Retourne la liste des noms de joueurs inscrits dans la battleroom.
+
+    Raises:
+        NotFoundError: Si la battleroom n'existe pas.
+    """
+    db: sqlite3.Connection = get_db()
+    if db.execute("SELECT id FROM battlerooms WHERE id = ?", (battleroom_id,)).fetchone() is None:
+        raise NotFoundError(f"Battleroom introuvable (id={battleroom_id}).")
+    rows = db.execute(
+        "SELECT username FROM battleroom_players WHERE battleroom_id = ?", (battleroom_id,)
+    ).fetchall()
+    return [r["username"] for r in rows]
 
 
 def delete_battleroom(battleroom_id: int) -> None:
