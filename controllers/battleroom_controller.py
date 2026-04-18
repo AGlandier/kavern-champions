@@ -106,12 +106,13 @@ def next_round():
         # 3. Incrémente le round
         battleroom = battleroom_repository.next_battleroom_round(battleroom_id)
 
-        # 4. Persiste les combats en base (player2=None pour les byes)
+        # 4. Persiste les combats en base (player2=None pour les byes, clôturés automatiquement)
         battles = [
             battle_repository.create_battle(battleroom_id, {
                 "player1": p.player1,
                 "player2": p.player2,
                 "champions_room_id": None,
+                **({"status": "ended"} if p.player2 is None else {}),
             })
             for p in pairings
         ]
