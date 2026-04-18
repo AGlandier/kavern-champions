@@ -1,14 +1,24 @@
 # Environnement
 .env
 *.db
+*.db-journal
+*.db-shm
+*.db-wal
 
-#Pycharm
+# PyCharm
 .idea/
 
 # Python
 __pycache__/
 *.py[cod]
 .venv/
+.pytest_cache/
+dist/
+build/
+*.egg-info/
+
+# Logs
+*.log
 
 contexts/
 .claude/
