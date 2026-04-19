@@ -1,0 +1,40 @@
+/* Thème clair (défaut) */
+:root {
+  --color-bg:         #f4f4f8;
+  --color-bg-nav:     #e8e8f2;
+  --color-surface:    #ffffff;
+  --color-text:       #1a1a2e;
+  --color-text-nav:   #1a1a2e;
+  --color-text-muted: #555566;
+  --color-twitch:     #7c3aed;
+  --color-twitch-hover: #5b21b6;
+  --color-border:     #d0d0e0;
+}
+
+/* Thème sombre */
+[data-theme="dark"] {
+  --color-bg:         #0f0f1a;
+  --color-bg-nav:     #1a1a2e;
+  --color-surface:    #1e1e30;
+  --color-text:       #e8e8f0;
+  --color-text-nav:   #ffffff;
+  --color-text-muted: #aaaacc;
+  --color-twitch:     #9146ff;
+  --color-twitch-hover: #bf8fff;
+  --color-border:     #2e2e4e;
+}
+
+/* Respect de la préférence système si aucun choix manuel */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg:         #0f0f1a;
+    --color-bg-nav:     #1a1a2e;
+    --color-surface:    #1e1e30;
+    --color-text:       #e8e8f0;
+    --color-text-nav:   #ffffff;
+    --color-text-muted: #aaaacc;
+    --color-twitch:     #9146ff;
+    --color-twitch-hover: #bf8fff;
+    --color-border:     #2e2e4e;
+  }
+}

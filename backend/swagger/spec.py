@@ -314,6 +314,32 @@ SWAGGER_TEMPLATE = {
             },
         },
 
+        "/battleroom/{room_id}/stats": {
+            "get": {
+                "tags": ["Battleroom"],
+                "summary": "Statistiques d'une battleroom",
+                "parameters": [{
+                    "in": "path", "name": "room_id", "required": True,
+                    "type": "integer", "description": "Identifiant de la battleroom",
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Statistiques de la battleroom",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "id":            {"type": "integer"},
+                                "name":          {"type": "string"},
+                                "players_count": {"type": "integer"},
+                                "round":         {"type": "integer"},
+                            },
+                        },
+                    },
+                    "404": {"description": "Battleroom introuvable"},
+                },
+            },
+        },
+
         "/battleroom/{room_id}/battles": {
             "get": {
                 "tags": ["Battleroom"],

@@ -1,0 +1,12 @@
+.default-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+.default-layout__content {
+  flex: 1;
+  padding: 1.5rem;
+}

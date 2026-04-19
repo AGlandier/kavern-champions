@@ -69,6 +69,21 @@ def is_player_in_room(room_id: int, username: str):
         return jsonify({"error": "Battleroom introuvable"}), 404
 
 
+@battleroom_bp.route("/<int:room_id>/stats", methods=["GET"])
+def get_room_stats(room_id: int):
+    try:
+        room = battleroom_repository.get_battleroom_by_id(room_id)
+        players = battleroom_repository.get_room_players(room_id)
+        return jsonify({
+            "id": room.id,
+            "name": room.name,
+            "players_count": len(players),
+            "round": room.round,
+        }), 200
+    except NotFoundError:
+        return jsonify({"error": "Battleroom introuvable"}), 404
+
+
 @battleroom_bp.route("/<room_id>", methods=["GET"])
 def get_room(room_id):
     try:
