@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from config.settings import Config
 from controllers.battleroom_controller import battleroom_bp
 from controllers.user_controller import user_bp
@@ -9,6 +10,7 @@ from database.db import init_db
 def create_app(config_class=Config) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config_class)
+    CORS(app, origins=app.config.get("CORS_ORIGINS", "*"))
 
     # Init DB
     with app.app_context():

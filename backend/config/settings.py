@@ -22,6 +22,9 @@ class Config:
     # Clé admin — header X-Admin-Key attendu sur les routes protégées
     ADMIN_KEY: str = os.environ.get("ADMIN_KEY", "super-secret-admin-key")
 
+    # CORS — origines autorisées (séparées par des virgules en prod)
+    CORS_ORIGINS: str = os.environ.get("CORS_ORIGINS", "*")
+
 
 class DevelopmentConfig(Config):
     DEBUG: bool = True
