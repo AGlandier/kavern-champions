@@ -70,7 +70,13 @@ def get_battle_by_id(battle_id: int, db_provider: Callable[[], sqlite3.Connectio
     return _row_to_battle(row)
 
 
-def get_battles_by_room(battleroom_id: int, round: int = -1, db_provider: Callable[[], sqlite3.Connection] = get_db) -> list[Battle]:
+def get_battles_by_room(
+    battleroom_id: int,
+    round: int = -1,
+    limit: int | None = None,
+    offset: int = 0,
+    db_provider: Callable[[], sqlite3.Connection] = get_db,
+) -> list[Battle]:
     """
     Retourne les battles d'une battleroom.
 
@@ -78,34 +84,81 @@ def get_battles_by_room(battleroom_id: int, round: int = -1, db_provider: Callab
         round: Si != -1, filtre par numéro de round.
     """
     db: sqlite3.Connection = db_provider()
-    if round == -1:
-        rows = db.execute(
-            "SELECT id, battleroom, round, finished, content FROM battle WHERE battleroom = ?",
-            (battleroom_id,),
-        ).fetchall()
-    else:
-        rows = db.execute(
-            "SELECT id, battleroom, round, finished, content FROM battle WHERE battleroom = ? AND round = ?",
-            (battleroom_id, round),
-        ).fetchall()
+    params: list = [battleroom_id]
+    where = "WHERE battleroom = ?"
+    if round != -1:
+        where += " AND round = ?"
+        params.append(round)
+    sql = f"SELECT id, battleroom, round, finished, content FROM battle {where} ORDER BY id ASC"
+    if limit is not None:
+        sql += " LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+    rows = db.execute(sql, params).fetchall()
     return [_row_to_battle(r) for r in rows]
 
 
-def get_all_battles(db_provider: Callable[[], sqlite3.Connection] = get_db) -> list[Battle]:
+def count_battles_by_room(
+    battleroom_id: int,
+    round: int = -1,
+    db_provider: Callable[[], sqlite3.Connection] = get_db,
+) -> int:
+    """Retourne le nombre de battles d'une battleroom."""
+    db: sqlite3.Connection = db_provider()
+    if round == -1:
+        return db.execute(
+            "SELECT COUNT(*) FROM battle WHERE battleroom = ?", (battleroom_id,)
+        ).fetchone()[0]
+    return db.execute(
+        "SELECT COUNT(*) FROM battle WHERE battleroom = ? AND round = ?", (battleroom_id, round)
+    ).fetchone()[0]
+
+
+def get_all_battles(
+    limit: int | None = None,
+    offset: int = 0,
+    db_provider: Callable[[], sqlite3.Connection] = get_db,
+) -> list[Battle]:
     """Retourne toutes les battles."""
     db: sqlite3.Connection = db_provider()
-    rows = db.execute("SELECT id, battleroom, round, finished, content FROM battle").fetchall()
+    sql = "SELECT id, battleroom, round, finished, content FROM battle ORDER BY id ASC"
+    params: list = []
+    if limit is not None:
+        sql += " LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+    rows = db.execute(sql, params).fetchall()
     return [_row_to_battle(r) for r in rows]
 
 
-def get_battles_by_user(username: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> list[Battle]:
+def count_all_battles(db_provider: Callable[[], sqlite3.Connection] = get_db) -> int:
+    """Retourne le nombre total de battles."""
+    return get_db().execute("SELECT COUNT(*) FROM battle").fetchone()[0]
+
+
+def get_battles_by_user(
+    username: str,
+    limit: int | None = None,
+    offset: int = 0,
+    db_provider: Callable[[], sqlite3.Connection] = get_db,
+) -> list[Battle]:
     """Retourne les battles dont le contenu mentionne l'utilisateur."""
     db: sqlite3.Connection = db_provider()
-    rows = db.execute(
-        "SELECT id, battleroom, round, finished, content FROM battle WHERE content LIKE ?",
-        (f"%{username}%",),
-    ).fetchall()
+    params: list = [f"%{username}%"]
+    sql = (
+        "SELECT id, battleroom, round, finished, content FROM battle "
+        "WHERE content LIKE ? ORDER BY id ASC"
+    )
+    if limit is not None:
+        sql += " LIMIT ? OFFSET ?"
+        params.extend([limit, offset])
+    rows = db.execute(sql, params).fetchall()
     return [_row_to_battle(r) for r in rows]
+
+
+def count_battles_by_user(username: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> int:
+    """Retourne le nombre de battles d'un utilisateur."""
+    return get_db().execute(
+        "SELECT COUNT(*) FROM battle WHERE content LIKE ?", (f"%{username}%",)
+    ).fetchone()[0]
 
 
 def set_champions_room_id(battle_id: int, champions_room_id: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battle:

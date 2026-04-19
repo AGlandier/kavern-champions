@@ -13,6 +13,23 @@ from kchampions_core import make_pairings
 
 battleroom_bp = Blueprint("battleroom", __name__)
 
+_ALLOWED_ORDER_BY = {"date", "name"}
+
+
+def _parse_pagination():
+    """Lit et valide limit, offset, query depuis les query params."""
+    try:
+        limit = int(request.args.get("limit", 10))
+        offset = int(request.args.get("offset", 0))
+    except ValueError:
+        return None, None, None, (jsonify({"error": "Les paramètres 'limit' et 'offset' doivent être des entiers"}), 400)
+    if limit < 1:
+        return None, None, None, (jsonify({"error": "'limit' doit être >= 1"}), 400)
+    if offset < 0:
+        return None, None, None, (jsonify({"error": "'offset' doit être >= 0"}), 400)
+    query = request.args.get("query", "").strip() or None
+    return limit, offset, query, None
+
 
 # ------------------------------------------------------------------
 # POST /battleroom/create  (admin)
@@ -36,11 +53,22 @@ def create():
 # ------------------------------------------------------------------
 @battleroom_bp.route("/", methods=["GET"])
 def get_all_rooms():
-    rooms = battleroom_repository.get_all_battlerooms()
-    return jsonify([
-        {"id": r.id, "name": r.name, "date": r.date, "round": r.round}
-        for r in rooms
-    ]), 200
+    limit, offset, query, err = _parse_pagination()
+    if err:
+        return err
+
+    order_by = request.args.get("order-by", "date")
+    if order_by not in _ALLOWED_ORDER_BY:
+        return jsonify({"error": f"'order-by' doit être l'une des valeurs : {', '.join(_ALLOWED_ORDER_BY)}"}), 400
+
+    rooms = battleroom_repository.get_all_battlerooms(limit=limit, offset=offset, query=query, order_by=order_by)
+    total = battleroom_repository.count_battlerooms(query=query)
+    return jsonify({
+        "battlerooms": [{"id": r.id, "name": r.name, "date": r.date, "round": r.round} for r in rooms],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }), 200
 
 
 # ------------------------------------------------------------------
@@ -49,9 +77,19 @@ def get_all_rooms():
 # ------------------------------------------------------------------
 @battleroom_bp.route("/<int:room_id>/players", methods=["GET"])
 def get_players(room_id: int):
+    limit, offset, query, err = _parse_pagination()
+    if err:
+        return err
     try:
-        players = battleroom_repository.get_room_players(room_id)
-        return jsonify({"battleroom_id": room_id, "players": players}), 200
+        players = battleroom_repository.get_room_players(room_id, limit=limit, offset=offset, query=query)
+        total = battleroom_repository.count_room_players(room_id, query=query)
+        return jsonify({
+            "battleroom_id": room_id,
+            "players": players,
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+        }), 200
     except NotFoundError:
         return jsonify({"error": "Battleroom introuvable"}), 404
 
@@ -225,13 +263,21 @@ def get_battles_by_room(room_id: int):
     except ValueError:
         return jsonify({"error": "Le paramètre 'round' doit être un entier"}), 400
 
-    battles = battle_repository.get_battles_by_room(room_id, round=round_filter)
+    limit, offset, _, err = _parse_pagination()
+    if err:
+        return err
+
+    battles = battle_repository.get_battles_by_room(room_id, round=round_filter, limit=limit, offset=offset)
+    total = battle_repository.count_battles_by_room(room_id, round=round_filter)
     return jsonify({
         "battleroom_id": room_id,
         "battles": [
             {"id": b.id, "round": b.round, "finished": b.finished, "content": b.content}
             for b in battles
         ],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
     }), 200
 
 
@@ -260,11 +306,20 @@ def end_room():
 # ------------------------------------------------------------------
 @battleroom_bp.route("/battle", methods=["GET"])
 def get_all_battles():
-    battles = battle_repository.get_all_battles()
-    return jsonify([
-        {"id": b.id, "battleroom": b.battleroom_id, "round": b.round, "finished": b.finished, "content": b.content}
-        for b in battles
-    ]), 200
+    limit, offset, _, err = _parse_pagination()
+    if err:
+        return err
+    battles = battle_repository.get_all_battles(limit=limit, offset=offset)
+    total = battle_repository.count_all_battles()
+    return jsonify({
+        "battles": [
+            {"id": b.id, "battleroom": b.battleroom_id, "round": b.round, "finished": b.finished, "content": b.content}
+            for b in battles
+        ],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+    }), 200
 
 
 # ------------------------------------------------------------------
@@ -291,13 +346,20 @@ def get_battle_by_user(user: str):
     except NotFoundError:
         return jsonify({"error": "Utilisateur introuvable"}), 404
 
-    battles = battle_repository.get_battles_by_user(user)
+    limit, offset, _, err = _parse_pagination()
+    if err:
+        return err
+    battles = battle_repository.get_battles_by_user(user, limit=limit, offset=offset)
+    total = battle_repository.count_battles_by_user(user)
     return jsonify({
         "user": user,
         "battles": [
             {"id": b.id, "battleroom": b.battleroom_id, "round": b.round, "finished": b.finished, "content": b.content}
             for b in battles
         ],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
     }), 200
 
 

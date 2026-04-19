@@ -250,22 +250,37 @@ SWAGGER_TEMPLATE = {
             "get": {
                 "tags": ["Battleroom"],
                 "summary": "Lister toutes les battlerooms",
+                "parameters": [
+                    {"in": "query", "name": "limit",    "required": False, "type": "integer", "default": 10,     "description": "Nombre maximum de résultats"},
+                    {"in": "query", "name": "offset",   "required": False, "type": "integer", "default": 0,      "description": "Décalage pour la pagination"},
+                    {"in": "query", "name": "query",    "required": False, "type": "string",                     "description": "Filtre sur le nom (commence par)"},
+                    {"in": "query", "name": "order-by", "required": False, "type": "string",  "default": "date", "description": "Tri : 'date' (desc) ou 'name' (asc)", "enum": ["date", "name"]},
+                ],
                 "responses": {
                     "200": {
                         "description": "Liste des battlerooms",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "id":    {"type": "integer"},
-                                    "name":  {"type": "string"},
-                                    "date":  {"type": "string"},
-                                    "round": {"type": "integer"},
+                            "type": "object",
+                            "properties": {
+                                "battlerooms": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id":    {"type": "integer"},
+                                            "name":  {"type": "string"},
+                                            "date":  {"type": "string"},
+                                            "round": {"type": "integer"},
+                                        },
+                                    },
                                 },
+                                "total":  {"type": "integer"},
+                                "limit":  {"type": "integer"},
+                                "offset": {"type": "integer"},
                             },
                         },
                     },
+                    "400": {"description": "Paramètres de pagination invalides"},
                 },
             },
         },
@@ -345,15 +360,10 @@ SWAGGER_TEMPLATE = {
                 "tags": ["Battleroom"],
                 "summary": "Lister les battles d'une battleroom",
                 "parameters": [
-                    {
-                        "in": "path", "name": "room_id", "required": True,
-                        "type": "integer", "description": "Identifiant de la battleroom",
-                    },
-                    {
-                        "in": "query", "name": "round", "required": False,
-                        "type": "integer", "default": -1,
-                        "description": "Filtre par numéro de round. -1 (défaut) retourne tous les rounds.",
-                    },
+                    {"in": "path",  "name": "room_id", "required": True,  "type": "integer",                    "description": "Identifiant de la battleroom"},
+                    {"in": "query", "name": "round",   "required": False, "type": "integer", "default": -1,     "description": "Filtre par numéro de round (-1 = tous)"},
+                    {"in": "query", "name": "limit",   "required": False, "type": "integer", "default": 10,     "description": "Nombre maximum de résultats"},
+                    {"in": "query", "name": "offset",  "required": False, "type": "integer", "default": 0,      "description": "Décalage pour la pagination"},
                 ],
                 "responses": {
                     "200": {
@@ -374,10 +384,13 @@ SWAGGER_TEMPLATE = {
                                         },
                                     },
                                 },
+                                "total":  {"type": "integer"},
+                                "limit":  {"type": "integer"},
+                                "offset": {"type": "integer"},
                             },
                         },
                     },
-                    "400": {"description": "Paramètre 'round' invalide"},
+                    "400": {"description": "Paramètres invalides"},
                     "404": {"description": "Battleroom introuvable"},
                 },
             },
@@ -387,10 +400,12 @@ SWAGGER_TEMPLATE = {
             "get": {
                 "tags": ["Battleroom"],
                 "summary": "Lister les joueurs d'une battleroom",
-                "parameters": [{
-                    "in": "path", "name": "room_id", "required": True,
-                    "type": "integer", "description": "Identifiant de la battleroom",
-                }],
+                "parameters": [
+                    {"in": "path",  "name": "room_id", "required": True,  "type": "integer",               "description": "Identifiant de la battleroom"},
+                    {"in": "query", "name": "limit",   "required": False, "type": "integer", "default": 10, "description": "Nombre maximum de résultats"},
+                    {"in": "query", "name": "offset",  "required": False, "type": "integer", "default": 0,  "description": "Décalage pour la pagination"},
+                    {"in": "query", "name": "query",   "required": False, "type": "string",                 "description": "Filtre sur le pseudo (commence par)"},
+                ],
                 "responses": {
                     "200": {
                         "description": "Liste des joueurs",
@@ -399,9 +414,13 @@ SWAGGER_TEMPLATE = {
                             "properties": {
                                 "battleroom_id": {"type": "integer"},
                                 "players": {"type": "array", "items": {"type": "string"}},
+                                "total":  {"type": "integer"},
+                                "limit":  {"type": "integer"},
+                                "offset": {"type": "integer"},
                             },
                         },
                     },
+                    "400": {"description": "Paramètres de pagination invalides"},
                     "404": {"description": "Battleroom introuvable"},
                 },
             },
@@ -599,14 +618,24 @@ SWAGGER_TEMPLATE = {
             "get": {
                 "tags": ["Battle"],
                 "summary": "Lister toutes les battles",
+                "parameters": [
+                    {"in": "query", "name": "limit",  "required": False, "type": "integer", "default": 10, "description": "Nombre maximum de résultats"},
+                    {"in": "query", "name": "offset", "required": False, "type": "integer", "default": 0,  "description": "Décalage pour la pagination"},
+                ],
                 "responses": {
                     "200": {
                         "description": "Liste des battles",
                         "schema": {
-                            "type": "array",
-                            "items": {"$ref": "#/definitions/Battle"},
+                            "type": "object",
+                            "properties": {
+                                "battles": {"type": "array", "items": {"$ref": "#/definitions/Battle"}},
+                                "total":   {"type": "integer"},
+                                "limit":   {"type": "integer"},
+                                "offset":  {"type": "integer"},
+                            },
                         },
                     },
+                    "400": {"description": "Paramètres de pagination invalides"},
                 },
             },
         },
@@ -615,10 +644,11 @@ SWAGGER_TEMPLATE = {
             "get": {
                 "tags": ["Battle"],
                 "summary": "Battles d'un utilisateur",
-                "parameters": [{
-                    "in": "path", "name": "user", "required": True,
-                    "type": "string", "description": "Nom de l'utilisateur",
-                }],
+                "parameters": [
+                    {"in": "path",  "name": "user",   "required": True,  "type": "string",                    "description": "Nom de l'utilisateur"},
+                    {"in": "query", "name": "limit",  "required": False, "type": "integer", "default": 10,    "description": "Nombre maximum de résultats"},
+                    {"in": "query", "name": "offset", "required": False, "type": "integer", "default": 0,     "description": "Décalage pour la pagination"},
+                ],
                 "responses": {
                     "200": {
                         "description": "Battles de l'utilisateur",
@@ -630,9 +660,13 @@ SWAGGER_TEMPLATE = {
                                     "type": "array",
                                     "items": {"$ref": "#/definitions/Battle"},
                                 },
+                                "total":  {"type": "integer"},
+                                "limit":  {"type": "integer"},
+                                "offset": {"type": "integer"},
                             },
                         },
                     },
+                    "400": {"description": "Paramètres de pagination invalides"},
                     "404": {"description": "Utilisateur introuvable"},
                 },
             },
