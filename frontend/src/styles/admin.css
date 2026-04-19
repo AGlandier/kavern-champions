@@ -72,6 +72,13 @@
   font-weight: 600;
 }
 
+.admin__table td:last-child,
+.admin__table th:last-child {
+  border: none;
+  background: none;
+  padding-left: 0.75rem;
+}
+
 /* ── Pagination ─────────────────────────────────────── */
 
 .admin__pagination {
@@ -134,6 +141,40 @@
   cursor: default;
 }
 
+/* ── Room manager header ────────────────────────────── */
+
+.admin__room-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin__room-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.admin__room-round {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
+.admin__round-indicator {
+  color: var(--color-text);
+  font-weight: 600;
+  min-width: 5rem;
+  text-align: center;
+}
+
+.admin__empty {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 1rem;
+}
+
 /* ── BattleRoomRow ──────────────────────────────────── */
 
 .room-row__status--open  { color: #38a169; font-weight: 600; }
@@ -151,6 +192,11 @@
   transition: background-color 0.15s;
 }
 
-.room-row__manage:hover {
+.room-row__manage:hover:not(:disabled) {
   background-color: var(--color-twitch-hover);
+}
+
+.room-row__manage:disabled {
+  opacity: 0.45;
+  cursor: default;
 }

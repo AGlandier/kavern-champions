@@ -5,7 +5,7 @@ export function useBattleRoomRow(props) {
   const router = useRouter()
 
   function goToManager() {
-    router.push({ name: 'admin-room', params: { id: props.room.id } })
+    router.push({ name: 'admin-room', query: { id: props.room.id } })
   }
 
   return { timeAgo, goToManager }

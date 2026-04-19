@@ -3,6 +3,7 @@ import DefaultLayout from '../layouts/DefaultLayout.vue'
 import HomeView from '../views/HomeView.vue'
 import AdminLoginView from '../views/admin/AdminLoginView.vue'
 import AdminView from '../views/admin/AdminView.vue'
+import BattleRoomManagerView from '../views/admin/BattleRoomManagerView.vue'
 
 function requireAdminKey(_to, _from, next) {
   const key = localStorage.getItem('kc-admin-key')
@@ -32,9 +33,9 @@ const routes = [
         beforeEnter: requireAdminKey,
       },
       {
-        path: 'admin/room/:id',
+        path: 'admin/battleroom',
         name: 'admin-room',
-        component: { template: '<div>Room manager — à venir</div>' },
+        component: BattleRoomManagerView,
         beforeEnter: requireAdminKey,
       },
     ],
