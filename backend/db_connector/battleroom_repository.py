@@ -149,6 +149,23 @@ def get_room_players(battleroom_id: int, db_provider: Callable[[], sqlite3.Conne
     return [r["username"] for r in rows]
 
 
+def leave_battleroom(battleroom_id: int, username: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> None:
+    """
+    Retire un joueur d'une battleroom.
+
+    Raises:
+        NotFoundError: Si la battleroom n'existe pas.
+    """
+    db: sqlite3.Connection = db_provider()
+    if db.execute("SELECT id FROM battlerooms WHERE id = ?", (battleroom_id,)).fetchone() is None:
+        raise NotFoundError(f"Battleroom introuvable (id={battleroom_id}).")
+    db.execute(
+        "DELETE FROM battleroom_players WHERE battleroom_id = ? AND username = ?",
+        (battleroom_id, username),
+    )
+    db.commit()
+
+
 def delete_battleroom(battleroom_id: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> None:
     """
     Supprime une battleroom (et ses battles en cascade).

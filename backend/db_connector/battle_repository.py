@@ -138,6 +138,58 @@ def set_champions_room_id(battle_id: int, champions_room_id: int, db_provider: C
     ).fetchone())
 
 
+def get_active_battle_for_player(battleroom_id: int, username: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> "Battle | None":
+    """
+    Retourne la battle non-terminée du joueur dans la battleroom, ou None s'il n'en a pas.
+
+    Un joueur ne peut avoir qu'une seule battle active à la fois dans une room.
+    """
+    db: sqlite3.Connection = db_provider()
+    rows = db.execute(
+        "SELECT id, battleroom, round, finished, content FROM battle"
+        " WHERE battleroom = ? AND finished = 0 AND content LIKE ?",
+        (battleroom_id, f"%{username}%"),
+    ).fetchall()
+    for row in rows:
+        try:
+            content = json.loads(row["content"])
+        except json.JSONDecodeError:
+            content = {}
+        if content.get("player1") == username or content.get("player2") == username:
+            return _row_to_battle(row)
+    return None
+
+
+def finish_unfinished_battles(battleroom_id: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> list["Battle"]:
+    """
+    Clôture toutes les battles non-terminées d'une battleroom sans résultat.
+
+    Appelé avant de passer au round suivant pour ne pas laisser de battles ouvertes.
+    """
+    db: sqlite3.Connection = db_provider()
+    rows = db.execute(
+        "SELECT id, battleroom, round, finished, content FROM battle WHERE battleroom = ? AND finished = 0",
+        (battleroom_id,),
+    ).fetchall()
+    closed: list[Battle] = []
+    for row in rows:
+        try:
+            content = json.loads(row["content"])
+        except json.JSONDecodeError:
+            content = {}
+        db.execute("UPDATE battle SET finished = 1 WHERE id = ?", (row["id"],))
+        closed.append(Battle(
+            id=row["id"],
+            battleroom_id=row["battleroom"],
+            round=row["round"],
+            finished=True,
+            content=content,
+        ))
+    if closed:
+        db.commit()
+    return closed
+
+
 def end_battle(battle_id: int, result: dict[str, Any], db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battle:
     """
     Clôture une battle en fusionnant le résultat dans son contenu JSON.

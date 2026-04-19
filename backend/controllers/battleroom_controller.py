@@ -3,7 +3,7 @@ battleroom_controller — Blueprint Flask
 Préfixe : /battleroom
 """
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, g, jsonify, request
 
 from controllers.decorators import require_admin_key, require_user_token, require_admin_or_user_token
 from db_connector import battleroom_repository, battle_repository, user_repository
@@ -103,10 +103,13 @@ def next_round():
         # 2. Génère les appariements via le core (aucun I/O)
         pairings = make_pairings(players, past_pairings)
 
-        # 3. Incrémente le round
+        # 3. Clôture les battles encore ouvertes du round précédent
+        battle_repository.finish_unfinished_battles(battleroom_id)
+
+        # 4. Incrémente le round
         battleroom = battleroom_repository.next_battleroom_round(battleroom_id)
 
-        # 4. Persiste les combats en base (byes clôturés automatiquement via finished=True)
+        # 5. Persiste les combats en base (byes clôturés automatiquement via finished=True)
         battles = [
             battle_repository.create_battle(
                 battleroom_id,
@@ -156,6 +159,39 @@ def enter():
         return jsonify({"message": f"{username} a rejoint la battleroom {battleroom_id}"}), 200
     except NotFoundError:
         return jsonify({"error": "Battleroom introuvable"}), 404
+
+
+# ------------------------------------------------------------------
+# POST /battleroom/drop  (user ou admin)
+# Retire un joueur d'une battleroom ; termine sa battle en cours si elle existe
+# ------------------------------------------------------------------
+@battleroom_bp.route("/drop", methods=["POST"])
+@require_admin_or_user_token
+def drop():
+    data = request.get_json(silent=True) or {}
+    battleroom_id = data.get("battleroom_id")
+    if battleroom_id is None:
+        return jsonify({"error": "Le champ 'battleroom_id' est requis"}), 400
+
+    if g.is_admin:
+        username = data.get("username", "").strip()
+        if not username:
+            return jsonify({"error": "Le champ 'username' est requis pour un admin"}), 400
+    else:
+        username = g.current_user
+
+    try:
+        active = battle_repository.get_active_battle_for_player(battleroom_id, username)
+        if active is not None:
+            battle_repository.end_battle(active.id, {"forfeit": True})
+        battleroom_repository.leave_battleroom(battleroom_id, username)
+    except NotFoundError:
+        return jsonify({"error": "Battleroom introuvable"}), 404
+
+    return jsonify({
+        "message": f"{username} a quitté la battleroom {battleroom_id}",
+        "forfeited_battle_id": active.id if active is not None else None,
+    }), 200
 
 
 # ------------------------------------------------------------------
@@ -257,7 +293,6 @@ def get_battle_by_user(user: str):
 @battleroom_bp.route("/battle/set-room", methods=["POST"])
 @require_user_token
 def set_battle_room():
-    from flask import g
     data = request.get_json(silent=True) or {}
     battle_id = data.get("battle_id")
     code = data.get("champions_room_id")
@@ -296,7 +331,6 @@ def set_battle_room():
 @battleroom_bp.route("/battle/end", methods=["POST"])
 @require_admin_or_user_token
 def end_battle():
-    from flask import g
     data = request.get_json(silent=True) or {}
     battle_id = data.get("battle_id")
     if battle_id is None:

@@ -470,6 +470,54 @@ SWAGGER_TEMPLATE = {
             },
         },
 
+        "/battleroom/drop": {
+            "post": {
+                "tags": ["Battleroom"],
+                "summary": "Quitter une battleroom (utilisateur ou admin)",
+                "description": (
+                    "Retire le joueur de la battleroom. "
+                    "Si le joueur a une battle en cours, elle est clôturée automatiquement avec un forfait. "
+                    "Un utilisateur authentifié ne peut quitter que pour lui-même. "
+                    "Un admin doit fournir le champ `username`."
+                ),
+                "security": [{"AdminKey": []}, {"BearerAuth": []}],
+                "parameters": [{
+                    "in": "body", "name": "body", "required": True,
+                    "schema": {
+                        "type": "object",
+                        "required": ["battleroom_id"],
+                        "properties": {
+                            "battleroom_id": {"type": "integer", "example": 1},
+                            "username": {
+                                "type": "string",
+                                "example": "Sacha",
+                                "description": "Requis si authentifié en tant qu'admin",
+                            },
+                        },
+                    },
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Joueur retiré de la battleroom",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {"type": "string"},
+                                "forfeited_battle_id": {
+                                    "type": "integer",
+                                    "description": "Identifiant de la battle clôturée, null si aucune",
+                                    "x-nullable": True,
+                                },
+                            },
+                        },
+                    },
+                    "400": {"description": "Champ 'battleroom_id' manquant ou 'username' manquant (admin)"},
+                    "401": {"description": "Authentification manquante ou invalide"},
+                    "404": {"description": "Battleroom introuvable"},
+                },
+            },
+        },
+
         "/battleroom/end": {
             "post": {
                 "tags": ["Battleroom"],
