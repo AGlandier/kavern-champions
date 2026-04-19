@@ -5,22 +5,26 @@ export class BattleRoomApi {
     this.#client = client
   }
 
-  getAll() {
-    return this.#client.get('/battleroom/')
+  getAll({ limit, offset, query, orderBy } = {}) {
+    return this.#client.get('/battleroom/', {
+      query: { limit, offset, query, 'order-by': orderBy },
+    })
   }
 
   getById(roomId) {
     return this.#client.get(`/battleroom/${roomId}`)
   }
 
-  getBattles(roomId, round) {
+  getBattles(roomId, { round, limit, offset } = {}) {
     return this.#client.get(`/battleroom/${roomId}/battles`, {
-      query: round !== undefined ? { round } : {},
+      query: { round, limit, offset },
     })
   }
 
-  getPlayers(roomId) {
-    return this.#client.get(`/battleroom/${roomId}/players`)
+  getPlayers(roomId, { limit, offset, query } = {}) {
+    return this.#client.get(`/battleroom/${roomId}/players`, {
+      query: { limit, offset, query },
+    })
   }
 
   isPlayerInRoom(roomId, username) {

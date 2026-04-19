@@ -5,16 +5,18 @@ export class BattleApi {
     this.#client = client
   }
 
-  getAll() {
-    return this.#client.get('/battleroom/battle')
+  getAll({ limit, offset } = {}) {
+    return this.#client.get('/battleroom/battle', { query: { limit, offset } })
   }
 
   getById(battleId) {
     return this.#client.get(`/battleroom/battle/${battleId}`)
   }
 
-  getByUser(username) {
-    return this.#client.get(`/battleroom/battle/${username}`)
+  getByUser(username, { limit, offset } = {}) {
+    return this.#client.get(`/battleroom/battle/${username}`, {
+      query: { limit, offset },
+    })
   }
 
   setRoom(battleId, championsRoomId) {
