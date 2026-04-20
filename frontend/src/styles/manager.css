@@ -1,0 +1,52 @@
+.manager {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.manager__title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.manager__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.manager__section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.manager__success {
+  color: #16a34a;
+  font-size: 0.875rem;
+}
+
+.manager__error {
+  color: #e53e3e;
+  font-size: 0.875rem;
+}
+
+.teamlist-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.teamlist-form__textarea {
+  width: 100%;
+  resize: vertical;
+  font-family: monospace;
+  min-height: 8rem;
+}

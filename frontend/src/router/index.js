@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import DefaultLayout from '../layouts/DefaultLayout.vue'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
+import ManagerView from '../views/ManagerView.vue'
 import AdminLoginView from '../views/admin/AdminLoginView.vue'
 import AdminView from '../views/admin/AdminView.vue'
 import BattleRoomManagerView from '../views/admin/BattleRoomManagerView.vue'
@@ -26,6 +27,11 @@ const routes = [
         path: 'login',
         name: 'login',
         component: LoginView,
+      },
+      {
+        path: 'manager',
+        name: 'manager',
+        component: ManagerView,
       },
       {
         path: 'admin/login',
