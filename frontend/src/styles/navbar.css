@@ -67,3 +67,53 @@
   width: 1.125rem;
   height: 1.125rem;
 }
+
+.navbar__user {
+  color: var(--color-text-nav);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+
+.navbar__user:hover {
+  text-decoration: underline;
+}
+
+.navbar__login-btn {
+  padding: 0.3rem 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  color: var(--color-text-nav);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.15s;
+}
+
+.navbar__login-btn:hover {
+  background-color: var(--color-border);
+}
+
+.navbar__logout {
+  background: none;
+  border: 1px solid var(--color-logout-border);
+  border-radius: 0.375rem;
+  color: var(--color-logout);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  width: 2rem;
+  height: 2rem;
+  transition: background-color 0.2s;
+}
+
+.navbar__logout:hover {
+  background-color: var(--color-logout-hover-bg);
+}
+
+.navbar__logout-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+}

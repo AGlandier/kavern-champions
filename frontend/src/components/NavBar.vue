@@ -1,9 +1,11 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import { useTheme } from '../composables/useTheme.js'
+import { useUserAuth } from '../composables/useUserAuth.js'
 import '../styles/navbar.css'
 
 const { theme, toggleTheme } = useTheme()
+const { currentUser, logout } = useUserAuth()
 </script>
 
 <template>
@@ -13,6 +15,19 @@ const { theme, toggleTheme } = useTheme()
     <span class="navbar__title">Les Champions de la Kaverne</span>
 
     <div class="navbar__right">
+      <button v-if="currentUser" class="navbar__logout" aria-label="Se déconnecter" @click="logout">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="navbar__logout-icon" aria-hidden="true">
+          <path fill-rule="evenodd" d="M12 2.25a.75.75 0 0 1 .75.75v9a.75.75 0 0 1-1.5 0V3a.75.75 0 0 1 .75-.75ZM6.166 5.106a.75.75 0 0 1 0 1.06 8.25 8.25 0 1 0 11.668 0 .75.75 0 1 1 1.06-1.06c3.808 3.807 3.808 9.98 0 13.788-3.807 3.808-9.98 3.808-13.788 0-3.808-3.807-3.808-9.98 0-13.788a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+      <RouterLink v-if="currentUser" :to="{ path: '/manager', query: { user: currentUser } }" class="navbar__user">
+        {{ currentUser }}
+      </RouterLink>
+    
+      <RouterLink v-else :to="{ name: 'login' }" class="navbar__login-btn">
+        Se connecter
+      </RouterLink>
+
       <button
         class="navbar__theme-toggle"
         :aria-label="theme === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'"

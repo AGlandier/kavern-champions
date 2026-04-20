@@ -9,6 +9,9 @@
   --color-twitch:     #7c3aed;
   --color-twitch-hover: #5b21b6;
   --color-border:     #d0d0e0;
+  --color-logout:          #dc2626;
+  --color-logout-border:   #fca5a5;
+  --color-logout-hover-bg: #fee2e2;
 }
 
 /* Thème sombre */
@@ -22,6 +25,9 @@
   --color-twitch:     #9146ff;
   --color-twitch-hover: #bf8fff;
   --color-border:     #2e2e4e;
+  --color-logout:          #f87171;
+  --color-logout-border:   #7f1d1d;
+  --color-logout-hover-bg: #1f0a0a;
 }
 
 /* Respect de la préférence système si aucun choix manuel */
@@ -36,5 +42,8 @@
     --color-twitch:     #9146ff;
     --color-twitch-hover: #bf8fff;
     --color-border:     #2e2e4e;
+    --color-logout:          #f87171;
+    --color-logout-border:   #7f1d1d;
+    --color-logout-hover-bg: #1f0a0a;
   }
 }
