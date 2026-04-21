@@ -19,6 +19,9 @@ export function useBattleRoomManager() {
 
   const hasPrevRound = computed(() => displayRound.value > 1)
   const hasNextRound = computed(() => room.value && displayRound.value < room.value.round)
+  const allBattlesFinished = computed(() =>
+    !room.value || room.value.round === 0 || battles.value.every(b => b.finished)
+  )
 
   function handleUnauthorized() {
     clearAdminKey()
@@ -82,7 +85,7 @@ export function useBattleRoomManager() {
 
   return {
     room, battles, displayRound, loading, error, nextRoundLoading,
-    hasPrevRound, hasNextRound,
+    hasPrevRound, hasNextRound, allBattlesFinished,
     goNextRound, onBattleEnded, prevRound, nextRound,
   }
 }

@@ -213,34 +213,14 @@ def get_active_battle_for_player(battleroom_id: int, username: str, db_provider:
     return None
 
 
-def finish_unfinished_battles(battleroom_id: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> list["Battle"]:
-    """
-    Clôture toutes les battles non-terminées d'une battleroom sans résultat.
-
-    Appelé avant de passer au round suivant pour ne pas laisser de battles ouvertes.
-    """
+def has_unfinished_battles(battleroom_id: int, round: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> bool:
+    """Retourne True s'il reste des battles non terminées pour le round donné."""
     db: sqlite3.Connection = db_provider()
-    rows = db.execute(
-        "SELECT id, battleroom, round, finished, content FROM battle WHERE battleroom = ? AND finished = 0",
-        (battleroom_id,),
-    ).fetchall()
-    closed: list[Battle] = []
-    for row in rows:
-        try:
-            content = json.loads(row["content"])
-        except json.JSONDecodeError:
-            content = {}
-        db.execute("UPDATE battle SET finished = 1 WHERE id = ?", (row["id"],))
-        closed.append(Battle(
-            id=row["id"],
-            battleroom_id=row["battleroom"],
-            round=row["round"],
-            finished=True,
-            content=content,
-        ))
-    if closed:
-        db.commit()
-    return closed
+    count = db.execute(
+        "SELECT COUNT(*) FROM battle WHERE battleroom = ? AND round = ? AND finished = 0",
+        (battleroom_id, round),
+    ).fetchone()[0]
+    return count > 0
 
 
 def end_battle(battle_id: int, result: dict[str, Any], db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battle:

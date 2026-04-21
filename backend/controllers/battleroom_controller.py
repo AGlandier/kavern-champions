@@ -144,7 +144,12 @@ def next_round():
         return jsonify({"error": "Le champ 'battleroom_id' est requis"}), 400
 
     try:
-        # 1. Récupère les joueurs et l'historique complet (matchs + byes)
+        # 1. Vérifie que toutes les battles du round en cours sont terminées
+        current_room = battleroom_repository.get_battleroom_by_id(battleroom_id)
+        if current_room.round > 0 and battle_repository.has_unfinished_battles(battleroom_id, current_room.round):
+            return jsonify({"error": "Toutes les battles du round en cours doivent être terminées avant de passer au suivant."}), 409
+
+        # 2. Récupère les joueurs et l'historique complet (matchs + byes)
         players = battleroom_repository.get_room_players(battleroom_id)
         past_battles = battle_repository.get_battles_by_room(battleroom_id)
         past_pairings = [
@@ -156,10 +161,7 @@ def next_round():
         # 2. Génère les appariements via le core (aucun I/O)
         pairings = make_pairings(players, past_pairings)
 
-        # 3. Clôture les battles encore ouvertes du round précédent
-        battle_repository.finish_unfinished_battles(battleroom_id)
-
-        # 4. Incrémente le round
+        # 3. Incrémente le round
         battleroom = battleroom_repository.next_battleroom_round(battleroom_id)
 
         # 5. Persiste les combats en base (byes clôturés automatiquement via finished=True)

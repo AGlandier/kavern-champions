@@ -16,7 +16,6 @@ from .battle_repository import (
     get_battles_by_user,
     set_champions_room_id,
     get_active_battle_for_player,
-    finish_unfinished_battles,
     end_battle,
 )
 from .user_repository import (
@@ -46,7 +45,6 @@ __all__ = [
     "get_battles_by_user",
     "set_champions_room_id",
     "get_active_battle_for_player",
-    "finish_unfinished_battles",
     "end_battle",
     "create_user",
     "get_user",

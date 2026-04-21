@@ -5,7 +5,7 @@ import '../../styles/admin.css'
 
 const {
   room, battles, displayRound, loading, error, nextRoundLoading,
-  hasPrevRound, hasNextRound,
+  hasPrevRound, hasNextRound, allBattlesFinished,
   goNextRound, onBattleEnded, prevRound, nextRound,
 } = useBattleRoomManager()
 </script>
@@ -20,7 +20,7 @@ const {
       <span v-if="room" class="admin__room-round">Round {{ room.round }}</span>
       <button
         class="kc-btn"
-        :disabled="nextRoundLoading"
+        :disabled="nextRoundLoading || !allBattlesFinished"
         @click="goNextRound"
       >
         {{ nextRoundLoading ? '…' : 'Round suivant' }}
