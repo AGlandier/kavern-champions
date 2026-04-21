@@ -1,5 +1,6 @@
 <script setup>
 import { useBattleRow } from './BattleRow.js'
+import { formatRoomCode } from '../../utils/formatRoomCode.js'
 import '../../styles/admin.css'
 
 const props = defineProps({
@@ -16,7 +17,7 @@ const { forceEnd } = useBattleRow(props, emit)
     <td>{{ battle.id }}</td>
     <td>{{ battle.content.player1 ?? '—' }}</td>
     <td>{{ battle.content.player2 ?? '—' }}</td>
-    <td>{{ battle.content.champions_room_id ?? '—' }}</td>
+    <td>{{ formatRoomCode(battle.content.champions_room_id) }}</td>
     <td>
       <span v-if="battle.finished" class="room-row__status--closed">Terminé</span>
       <span v-else class="room-row__status--open">En cours</span>

@@ -213,6 +213,45 @@ SWAGGER_TEMPLATE = {
             },
         },
 
+        "/user/active-battle": {
+            "get": {
+                "tags": ["Utilisateur"],
+                "summary": "Battle active d'un utilisateur",
+                "description": (
+                    "Retourne la battle en cours (non terminée) dans laquelle l'utilisateur est player1 ou player2. "
+                    "Un utilisateur ne peut avoir qu'une seule battle active à la fois. "
+                    "Retourne `null` si aucune battle active n'est trouvée."
+                ),
+                "parameters": [{
+                    "in": "query", "name": "name", "required": True,
+                    "type": "string", "description": "Nom de l'utilisateur",
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Battle active ou null",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "battle": {
+                                    "x-nullable": True,
+                                    "type": "object",
+                                    "properties": {
+                                        "id":           {"type": "integer"},
+                                        "battleroom_id": {"type": "integer"},
+                                        "round":        {"type": "integer"},
+                                        "finished":     {"type": "boolean"},
+                                        "content":      {"type": "object"},
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    "400": {"description": "Paramètre 'name' manquant"},
+                    "404": {"description": "Utilisateur introuvable"},
+                },
+            },
+        },
+
         "/user/teamlist": {
             "post": {
                 "tags": ["Utilisateur"],
@@ -690,9 +729,9 @@ SWAGGER_TEMPLATE = {
                         "properties": {
                             "battle_id": {"type": "integer", "example": 1},
                             "champions_room_id": {
-                                "type": "integer",
-                                "example": 12345678,
-                                "description": "Code à 8 chiffres (10000000–99999999)",
+                                "type": "string",
+                                "example": "AB12CD34",
+                                "description": "Code à 8 caractères alphanumériques en majuscules (ex: AB12CD34)",
                             },
                         },
                     },
@@ -704,7 +743,7 @@ SWAGGER_TEMPLATE = {
                             "type": "object",
                             "properties": {
                                 "battle_id": {"type": "integer"},
-                                "champions_room_id": {"type": "integer"},
+                                "champions_room_id": {"type": "string"},
                             },
                         },
                     },

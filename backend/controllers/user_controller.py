@@ -4,7 +4,7 @@ Préfixe : /user
 """
 
 from flask import Blueprint, jsonify, request, g
-from db_connector import get_user, update_user_teamlist, user_has_password, NotFoundError, DuplicateError
+from db_connector import get_user, update_user_teamlist, user_has_password, get_active_battle_for_user, NotFoundError, DuplicateError
 from controllers.decorators import require_user_token
 
 user_bp = Blueprint("user", __name__)
@@ -47,6 +47,36 @@ def get_stats():
         }), 200
     except NotFoundError:
         return jsonify({"error": "Utilisateur introuvable"}), 404
+
+
+# ------------------------------------------------------------------
+# GET /user/active-battle
+# Retourne la battle active d'un utilisateur (player1 ou player2)
+# ------------------------------------------------------------------
+@user_bp.route("/active-battle", methods=["GET"])
+def get_active_battle():
+    username = request.args.get("name", "").strip()
+    if not username:
+        return jsonify({"error": "Le paramètre de requête 'name' est requis"}), 400
+
+    try:
+        get_user(username)
+    except NotFoundError:
+        return jsonify({"error": "Utilisateur introuvable"}), 404
+
+    battle = get_active_battle_for_user(username)
+    if battle is None:
+        return jsonify({"battle": None}), 200
+
+    return jsonify({
+        "battle": {
+            "id": battle.id,
+            "battleroom_id": battle.battleroom_id,
+            "round": battle.round,
+            "finished": battle.finished,
+            "content": battle.content,
+        }
+    }), 200
 
 
 # ------------------------------------------------------------------

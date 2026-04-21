@@ -16,4 +16,8 @@ export class UserApi {
   updateTeamlist(teamlist) {
     return this.#client.post('/user/teamlist', { body: { teamlist } })
   }
+
+  getActiveBattle(name) {
+    return this.#client.get('/user/active-battle', { query: { name } })
+  }
 }

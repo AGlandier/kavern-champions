@@ -3,6 +3,8 @@ battleroom_controller — Blueprint Flask
 Préfixe : /battleroom
 """
 
+import re
+
 from flask import Blueprint, g, jsonify, request
 
 from controllers.decorators import require_admin_key, require_user_token, require_admin_or_user_token
@@ -390,13 +392,9 @@ def set_battle_room():
     if battle_id is None or code is None:
         return jsonify({"error": "Les champs 'battle_id' et 'champions_room_id' sont requis"}), 400
 
-    try:
-        code = int(code)
-    except (TypeError, ValueError):
-        return jsonify({"error": "'champions_room_id' doit être un entier"}), 400
-
-    if not (10_000_000 <= code <= 99_999_999):
-        return jsonify({"error": "'champions_room_id' doit être un code à 8 chiffres"}), 400
+    code = str(code).strip().upper()
+    if not re.fullmatch(r"[A-Z0-9]{8}", code):
+        return jsonify({"error": "'champions_room_id' doit être un code de 8 caractères (lettres majuscules et chiffres)"}), 400
 
     try:
         battle = battle_repository.get_battle_by_id(battle_id)

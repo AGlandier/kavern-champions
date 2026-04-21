@@ -161,7 +161,7 @@ def count_battles_by_user(username: str, db_provider: Callable[[], sqlite3.Conne
     ).fetchone()[0]
 
 
-def set_champions_room_id(battle_id: int, champions_room_id: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battle:
+def set_champions_room_id(battle_id: int, champions_room_id: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battle:
     """
     Renseigne le champions_room_id d'une battle.
 
@@ -202,6 +202,28 @@ def get_active_battle_for_player(battleroom_id: int, username: str, db_provider:
         "SELECT id, battleroom, round, finished, content FROM battle"
         " WHERE battleroom = ? AND finished = 0 AND content LIKE ?",
         (battleroom_id, f"%{username}%"),
+    ).fetchall()
+    for row in rows:
+        try:
+            content = json.loads(row["content"])
+        except json.JSONDecodeError:
+            content = {}
+        if content.get("player1") == username or content.get("player2") == username:
+            return _row_to_battle(row)
+    return None
+
+
+def get_active_battle_for_user(username: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> "Battle | None":
+    """
+    Retourne la battle active (non-terminée) du joueur toutes rooms confondues, ou None.
+
+    Un joueur ne peut appartenir qu'à une seule battle active à la fois.
+    """
+    db: sqlite3.Connection = db_provider()
+    rows = db.execute(
+        "SELECT id, battleroom, round, finished, content FROM battle"
+        " WHERE finished = 0 AND content LIKE ?",
+        (f"%{username}%",),
     ).fetchall()
     for row in rows:
         try:
