@@ -204,10 +204,21 @@ def enter():
     data = request.get_json(silent=True) or {}
     battleroom_id = data.get("battleroom_id")
     username = data.get("username", "").strip()
+
     if not battleroom_id or not username:
         return jsonify({"error": "Les champs 'battleroom_id' et 'username' sont requis"}), 400
 
+    current_room = battleroom_repository.get_battleroom_for_user(username)
+    if current_room == battleroom_id:
+        return jsonify({"error": f"{username} est déjà dans la battleroom {battleroom_id}"}), 409
+
     try:
+        if current_room is not None:
+            active = battle_repository.get_active_battle_for_player(current_room, username)
+            if active is not None:
+                battle_repository.end_battle(active.id, {"forfeit": True})
+            battleroom_repository.leave_battleroom(current_room, username)
+
         battleroom_repository.enter_battleroom(battleroom_id, username)
         return jsonify({"message": f"{username} a rejoint la battleroom {battleroom_id}"}), 200
     except NotFoundError:

@@ -206,6 +206,15 @@ def count_room_players(
     ).fetchone()[0]
 
 
+def get_battleroom_for_user(username: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> int | None:
+    """Retourne l'id de la battleroom à laquelle appartient l'utilisateur, ou None."""
+    db: sqlite3.Connection = db_provider()
+    row = db.execute(
+        "SELECT battleroom_id FROM battleroom_players WHERE username = ?", (username,)
+    ).fetchone()
+    return row["battleroom_id"] if row else None
+
+
 def leave_battleroom(battleroom_id: int, username: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> None:
     """
     Retire un joueur d'une battleroom.
