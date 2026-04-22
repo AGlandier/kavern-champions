@@ -376,6 +376,14 @@ SWAGGER_TEMPLATE = {
                         "required": ["name"],
                         "properties": {
                             "name": {"type": "string", "example": "Room principale"},
+                            "requires_teamlist": {
+                                "type": "boolean",
+                                "example": False,
+                                "description": (
+                                    "Si true, les joueurs sans teamlist renseignée sont exclus "
+                                    "du tirage lors du passage au round suivant."
+                                ),
+                            },
                         },
                     },
                 }],
@@ -540,6 +548,11 @@ SWAGGER_TEMPLATE = {
             "post": {
                 "tags": ["Battleroom"],
                 "summary": "Passer au round suivant (admin)",
+                "description": (
+                    "Génère les appariements pour le round suivant. "
+                    "Si la battleroom a `requires_teamlist=true`, les joueurs sans teamlist renseignée "
+                    "sont exclus du tirage (ils restent inscrits mais n'ont pas de battle ce round)."
+                ),
                 "security": [{"AdminKey": []}],
                 "parameters": [{
                     "in": "body", "name": "body", "required": True,
@@ -843,6 +856,10 @@ SWAGGER_TEMPLATE = {
                 "name": {"type": "string"},
                 "date": {"type": "string", "format": "date-time"},
                 "round": {"type": "integer"},
+                "requires_teamlist": {
+                    "type": "boolean",
+                    "description": "Si true, les joueurs sans teamlist sont exclus du tirage au round suivant.",
+                },
             },
         },
         "Battle": {
