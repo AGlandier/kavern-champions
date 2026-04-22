@@ -27,5 +27,4 @@ class Battle:
 @dataclass
 class User:
     name: str
-    teamlist: str
     number_battle: int
