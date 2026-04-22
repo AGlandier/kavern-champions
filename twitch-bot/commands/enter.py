@@ -20,10 +20,6 @@ async def enter_command(ctx) -> None:
     status = result["status"]
 
     if status == 200:
-        await ctx.reply("✅ Tu as rejoint la battleroom !")
-    elif status == 409:
-        await ctx.reply("Tu es déjà inscrit dans cette battleroom.")
-    else:
-        await ctx.reply("Une erreur est survenue, réessaie.")
+        await ctx.reply(f"@{(ctx.author.name)} est prêt à se battre !")
 
     _cooldowns[username] = now
