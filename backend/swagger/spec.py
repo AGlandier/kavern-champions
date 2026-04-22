@@ -198,17 +198,53 @@ SWAGGER_TEMPLATE = {
             "get": {
                 "tags": ["Utilisateur"],
                 "summary": "Statistiques d'un utilisateur",
-                "parameters": [{
-                    "in": "query", "name": "name", "required": True,
-                    "type": "string", "description": "Nom de l'utilisateur",
-                }],
+                "description": (
+                    "Retourne les stats de l'utilisateur. "
+                    "Si `battleroom_id` est fourni, la teamlist de cet utilisateur pour cette battleroom est incluse ; "
+                    "sinon `teamlist` est une chaîne vide."
+                ),
+                "parameters": [
+                    {
+                        "in": "query", "name": "name", "required": True,
+                        "type": "string", "description": "Nom de l'utilisateur",
+                    },
+                    {
+                        "in": "query", "name": "battleroom_id", "required": False,
+                        "type": "integer", "description": "Identifiant de la battleroom (pour inclure la teamlist)",
+                    },
+                ],
                 "responses": {
                     "200": {
                         "description": "Statistiques de l'utilisateur",
                         "schema": {"$ref": "#/definitions/User"},
                     },
-                    "400": {"description": "Paramètre 'name' manquant"},
+                    "400": {"description": "Paramètre 'name' manquant ou 'battleroom_id' invalide"},
                     "404": {"description": "Utilisateur introuvable"},
+                },
+            },
+        },
+
+        "/user/battleroom": {
+            "get": {
+                "tags": ["Utilisateur"],
+                "summary": "Battleroom courante de l'utilisateur authentifié",
+                "description": "Retourne l'identifiant de la battleroom dans laquelle l'utilisateur est actuellement inscrit, ou null.",
+                "security": [{"BearerAuth": []}],
+                "responses": {
+                    "200": {
+                        "description": "Battleroom courante",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "battleroom_id": {
+                                    "type": "integer",
+                                    "x-nullable": True,
+                                    "description": "Identifiant de la battleroom, ou null si l'utilisateur n'est dans aucune salle",
+                                },
+                            },
+                        },
+                    },
+                    "401": {"description": "Token manquant ou invalide"},
                 },
             },
         },
@@ -255,13 +291,15 @@ SWAGGER_TEMPLATE = {
         "/user/teamlist": {
             "post": {
                 "tags": ["Utilisateur"],
-                "summary": "Mettre à jour la teamlist (utilisateur authentifié)",
+                "summary": "Mettre à jour la teamlist pour une battleroom (utilisateur authentifié)",
                 "security": [{"BearerAuth": []}],
                 "parameters": [{
                     "in": "body", "name": "body", "required": True,
                     "schema": {
                         "type": "object",
+                        "required": ["battleroom_id"],
                         "properties": {
+                            "battleroom_id": {"type": "integer", "example": 1},
                             "teamlist": {"type": "string", "example": "Pikachu, Évoli"},
                         },
                     },
@@ -273,10 +311,12 @@ SWAGGER_TEMPLATE = {
                             "type": "object",
                             "properties": {
                                 "name": {"type": "string"},
+                                "battleroom_id": {"type": "integer"},
                                 "teamlist": {"type": "string"},
                             },
                         },
                     },
+                    "400": {"description": "Champ 'battleroom_id' manquant ou invalide"},
                     "401": {"description": "Token manquant ou invalide"},
                     "404": {"description": "Utilisateur introuvable"},
                 },
@@ -819,8 +859,11 @@ SWAGGER_TEMPLATE = {
             "type": "object",
             "properties": {
                 "name": {"type": "string"},
-                "teamlist": {"type": "string"},
                 "number_battle": {"type": "integer"},
+                "teamlist": {
+                    "type": "string",
+                    "description": "Teamlist pour la battleroom demandée (vide si battleroom_id absent de la requête)",
+                },
             },
         },
     },
