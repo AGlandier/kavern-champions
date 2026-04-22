@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { user, battle } from '../api/index.js'
+import { user, battle, battleroom } from '../api/index.js'
 import { formatRoomCode } from '../utils/formatRoomCode.js'
 import { useUserAuth } from '../composables/useUserAuth.js'
 import UpdateTeamlistForm from '../components/UpdateTeamlistForm.vue'
@@ -15,6 +15,7 @@ const { currentUser } = useUserAuth()
 const username = route.query.user
 const teamlist = ref('')
 const currentBattleroomId = ref(null)
+const currentBattleroomRequiresTeamlist = ref(false)
 const loading = ref(false)
 const loadError = ref(null)
 const saveSuccess = ref(false)
@@ -47,8 +48,12 @@ onMounted(async () => {
     currentBattleroomId.value = battleroomData.battleroom_id
 
     if (currentBattleroomId.value !== null) {
-      const stats = await user.getStats(username, currentBattleroomId.value)
+      const [stats, roomData] = await Promise.all([
+        user.getStats(username, currentBattleroomId.value),
+        battleroom.getById(currentBattleroomId.value),
+      ])
       teamlist.value = stats.teamlist ?? ''
+      currentBattleroomRequiresTeamlist.value = roomData.requires_teamlist ?? false
     }
 
     if (battleData.battle) {
@@ -215,7 +220,7 @@ async function handleEndBattle() {
         </div>
       </section>
 
-      <section class="manager__section">
+      <section v-if="currentBattleroomRequiresTeamlist" class="manager__section">
         <h2 class="manager__section-title">Teamlist</h2>
         <UpdateTeamlistForm :model-value="teamlist" :loading="loading" @submit="handleSave" />
         <p v-if="saveSuccess" class="manager__success">Teamlist mise à jour.</p>
