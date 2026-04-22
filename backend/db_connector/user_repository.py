@@ -1,5 +1,5 @@
 """
-user_repository.py — Opérations CRUD sur la table `user`.
+user_repository.py — Opérations CRUD sur la table `user` et `battleroom_teamlist`.
 """
 
 import sqlite3
@@ -10,13 +10,12 @@ from db_connector.models import User
 from db_connector.exceptions import NotFoundError, DuplicateError
 
 
-def create_user(name: str, teamlist: str = "", db_provider: Callable[[], sqlite3.Connection] = get_db) -> User:
+def create_user(name: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> User:
     """
     Crée un nouvel utilisateur en base.
 
     Args:
-        name:     Identifiant unique de l'utilisateur (clé primaire).
-        teamlist: Liste d'équipe initiale (chaîne libre, vide par défaut).
+        name: Identifiant unique de l'utilisateur (clé primaire).
 
     Returns:
         User créé.
@@ -31,20 +30,16 @@ def create_user(name: str, teamlist: str = "", db_provider: Callable[[], sqlite3
 
     db: sqlite3.Connection = db_provider()
 
-    # Vérifie l'unicité avant insertion pour lever une erreur explicite
     existing = db.execute(
         "SELECT name FROM user WHERE name = ?", (name,)
     ).fetchone()
     if existing is not None:
         raise DuplicateError(f"L'utilisateur '{name}' existe déjà.")
 
-    db.execute(
-        "INSERT INTO user (name, teamlist) VALUES (?, ?)",
-        (name, teamlist),
-    )
+    db.execute("INSERT INTO user (name) VALUES (?)", (name,))
     db.commit()
 
-    return User(name=name, teamlist=teamlist, number_battle=0)
+    return User(name=name, number_battle=0)
 
 
 def get_user(name: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> User:
@@ -64,7 +59,7 @@ def get_user(name: str, db_provider: Callable[[], sqlite3.Connection] = get_db) 
     db: sqlite3.Connection = db_provider()
 
     row = db.execute(
-        "SELECT name, teamlist, number_battle FROM user WHERE name = ?",
+        "SELECT name, number_battle FROM user WHERE name = ?",
         (name,),
     ).fetchone()
 
@@ -73,29 +68,58 @@ def get_user(name: str, db_provider: Callable[[], sqlite3.Connection] = get_db) 
 
     return User(
         name=row["name"],
-        teamlist=row["teamlist"],
         number_battle=row["number_battle"],
     )
 
 
-def update_user_teamlist(name: str, teamlist: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> User:
+def get_battleroom_teamlist(
+    name: str,
+    battleroom_id: int,
+    db_provider: Callable[[], sqlite3.Connection] = get_db,
+) -> str:
     """
-    Met à jour la teamlist d'un utilisateur.
+    Retourne la teamlist d'un utilisateur pour une battleroom donnée.
+    Retourne une chaîne vide si aucune entrée n'existe.
+    """
+    db: sqlite3.Connection = db_provider()
+    row = db.execute(
+        "SELECT teamlist FROM battleroom_teamlist WHERE username = ? AND battleroom_id = ?",
+        (name.strip(), battleroom_id),
+    ).fetchone()
+    return row["teamlist"] if row else ""
+
+
+def upsert_battleroom_teamlist(
+    name: str,
+    battleroom_id: int,
+    teamlist: str,
+    db_provider: Callable[[], sqlite3.Connection] = get_db,
+) -> str:
+    """
+    Crée ou met à jour la teamlist d'un utilisateur pour une battleroom.
 
     Returns:
-        User mis à jour.
+        La teamlist enregistrée.
 
     Raises:
         NotFoundError: Si l'utilisateur n'existe pas.
     """
     name = name.strip()
     db: sqlite3.Connection = db_provider()
-    row = db.execute("SELECT name FROM user WHERE name = ?", (name,)).fetchone()
-    if row is None:
+
+    if db.execute("SELECT name FROM user WHERE name = ?", (name,)).fetchone() is None:
         raise NotFoundError(f"Utilisateur '{name}' introuvable.")
-    db.execute("UPDATE user SET teamlist = ? WHERE name = ?", (teamlist, name))
+
+    db.execute(
+        """
+        INSERT INTO battleroom_teamlist (battleroom_id, username, teamlist)
+        VALUES (?, ?, ?)
+        ON CONFLICT(battleroom_id, username) DO UPDATE SET teamlist = excluded.teamlist
+        """,
+        (battleroom_id, name, teamlist),
+    )
     db.commit()
-    return get_user(name, db_provider=db_provider)
+    return teamlist
 
 
 def increment_number_battle(name: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> None:
