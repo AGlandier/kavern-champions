@@ -9,7 +9,7 @@ from db_connector.models import Battleroom
 from db_connector.exceptions import NotFoundError
 
 
-def create_battleroom(name: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battleroom:
+def create_battleroom(name: str, requires_teamlist: bool = False, db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battleroom:
     """
     Insère une nouvelle battleroom en base.
 
@@ -28,13 +28,13 @@ def create_battleroom(name: str, db_provider: Callable[[], sqlite3.Connection] =
 
     db: sqlite3.Connection = db_provider()
     cursor = db.execute(
-        "INSERT INTO battlerooms (name) VALUES (?)",
-        (name,),
+        "INSERT INTO battlerooms (name, requires_teamlist) VALUES (?, ?)",
+        (name, int(requires_teamlist)),
     )
     db.commit()
 
     row = db.execute(
-        "SELECT id, name, date, round FROM battlerooms WHERE id = ?",
+        "SELECT id, name, date, round, requires_teamlist FROM battlerooms WHERE id = ?",
         (cursor.lastrowid,),
     ).fetchone()
 
@@ -43,6 +43,7 @@ def create_battleroom(name: str, db_provider: Callable[[], sqlite3.Connection] =
         name=row["name"],
         date=row["date"],
         round=row["round"],
+        requires_teamlist=bool(row["requires_teamlist"]),
     )
 
 
@@ -67,12 +68,12 @@ def get_all_battlerooms(
     if query:
         where = "WHERE name LIKE ?"
         params.append(f"{query}%")
-    sql = f"SELECT id, name, date, round FROM battlerooms {where} ORDER BY {order_clause}"
+    sql = f"SELECT id, name, date, round, requires_teamlist FROM battlerooms {where} ORDER BY {order_clause}"
     if limit is not None:
         sql += " LIMIT ? OFFSET ?"
         params.extend([limit, offset])
     rows = db.execute(sql, params).fetchall()
-    return [Battleroom(id=r["id"], name=r["name"], date=r["date"], round=r["round"]) for r in rows]
+    return [Battleroom(id=r["id"], name=r["name"], date=r["date"], round=r["round"], requires_teamlist=bool(r["requires_teamlist"])) for r in rows]
 
 
 def count_battlerooms(query: str | None = None, db_provider: Callable[[], sqlite3.Connection] = get_db) -> int:
@@ -98,7 +99,7 @@ def get_battleroom_by_id(battleroom_id: int, db_provider: Callable[[], sqlite3.C
     """
     db: sqlite3.Connection = db_provider()
     row = db.execute(
-        "SELECT id, name, date, round FROM battlerooms WHERE id = ?",
+        "SELECT id, name, date, round, requires_teamlist FROM battlerooms WHERE id = ?",
         (battleroom_id,),
     ).fetchone()
 
@@ -110,6 +111,7 @@ def get_battleroom_by_id(battleroom_id: int, db_provider: Callable[[], sqlite3.C
         name=row["name"],
         date=row["date"],
         round=row["round"],
+        requires_teamlist=bool(row["requires_teamlist"]),
     )
 
 

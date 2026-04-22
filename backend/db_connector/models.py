@@ -13,6 +13,7 @@ class Battleroom:
     name: str
     date: str
     round: int
+    requires_teamlist: bool
 
 
 @dataclass
