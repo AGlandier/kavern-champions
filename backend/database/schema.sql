@@ -21,9 +21,10 @@ CREATE TABLE IF NOT EXISTS battle (
 );
 
 -- Table battleroom_players : joueurs inscrits dans une battleroom
+-- Un joueur ne peut appartenir qu'à une seule battleroom à la fois (UNIQUE username)
 CREATE TABLE IF NOT EXISTS battleroom_players (
     battleroom_id INTEGER NOT NULL,
-    username      TEXT    NOT NULL,
+    username      TEXT    NOT NULL UNIQUE,
     PRIMARY KEY (battleroom_id, username),
     FOREIGN KEY (battleroom_id) REFERENCES battlerooms(id) ON DELETE CASCADE,
     FOREIGN KEY (username)      REFERENCES user(name)
