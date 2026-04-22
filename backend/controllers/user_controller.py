@@ -4,7 +4,15 @@ Préfixe : /user
 """
 
 from flask import Blueprint, jsonify, request, g
-from db_connector import get_user, update_user_teamlist, user_has_password, get_active_battle_for_user, NotFoundError, DuplicateError
+from db_connector import (
+    get_user,
+    get_battleroom_teamlist,
+    upsert_battleroom_teamlist,
+    user_has_password,
+    get_active_battle_for_user,
+    NotFoundError,
+)
+from db_connector.battleroom_repository import get_battleroom_for_user
 from controllers.decorators import require_user_token
 
 user_bp = Blueprint("user", __name__)
@@ -21,7 +29,7 @@ def is_secured():
         return jsonify({"error": "Le paramètre de requête 'name' est requis"}), 400
 
     try:
-        get_user(username)  # vérifie l'existence
+        get_user(username)
     except NotFoundError:
         return jsonify({"error": "Utilisateur introuvable"}), 404
 
@@ -31,6 +39,7 @@ def is_secured():
 # ------------------------------------------------------------------
 # GET /user/stats
 # Retourne les statistiques d'un utilisateur
+# Accepte un paramètre optionnel battleroom_id pour inclure la teamlist
 # ------------------------------------------------------------------
 @user_bp.route("/stats", methods=["GET"])
 def get_stats():
@@ -38,15 +47,37 @@ def get_stats():
     if not username:
         return jsonify({"error": "Le paramètre de requête 'name' est requis"}), 400
 
+    raw_room = request.args.get("battleroom_id")
+    battleroom_id = None
+    if raw_room is not None:
+        try:
+            battleroom_id = int(raw_room)
+        except ValueError:
+            return jsonify({"error": "Le paramètre 'battleroom_id' doit être un entier"}), 400
+
     try:
         user = get_user(username)
-        return jsonify({
-            "name": user.name,
-            "teamlist": user.teamlist,
-            "number_battle": user.number_battle,
-        }), 200
     except NotFoundError:
         return jsonify({"error": "Utilisateur introuvable"}), 404
+
+    teamlist = get_battleroom_teamlist(username, battleroom_id) if battleroom_id is not None else ""
+
+    return jsonify({
+        "name": user.name,
+        "teamlist": teamlist,
+        "number_battle": user.number_battle,
+    }), 200
+
+
+# ------------------------------------------------------------------
+# GET /user/battleroom
+# Retourne la battleroom courante de l'utilisateur authentifié
+# ------------------------------------------------------------------
+@user_bp.route("/battleroom", methods=["GET"])
+@require_user_token
+def get_user_battleroom():
+    battleroom_id = get_battleroom_for_user(g.current_user)
+    return jsonify({"battleroom_id": battleroom_id}), 200
 
 
 # ------------------------------------------------------------------
@@ -81,7 +112,7 @@ def get_active_battle():
 
 # ------------------------------------------------------------------
 # POST /user/teamlist
-# Met à jour la teamlist d'un utilisateur
+# Met à jour la teamlist d'un utilisateur pour une battleroom
 # ------------------------------------------------------------------
 @user_bp.route("/teamlist", methods=["POST"])
 @require_user_token
@@ -89,8 +120,20 @@ def update_teamlist():
     data = request.get_json(silent=True) or {}
     teamlist = data.get("teamlist", "").strip()
 
+    battleroom_id = data.get("battleroom_id")
+    if battleroom_id is None:
+        return jsonify({"error": "Le champ 'battleroom_id' est requis"}), 400
     try:
-        user = update_user_teamlist(g.current_user, teamlist)
-        return jsonify({"name": user.name, "teamlist": user.teamlist}), 200
+        battleroom_id = int(battleroom_id)
+    except (TypeError, ValueError):
+        return jsonify({"error": "Le champ 'battleroom_id' doit être un entier"}), 400
+
+    try:
+        saved = upsert_battleroom_teamlist(g.current_user, battleroom_id, teamlist)
+        return jsonify({
+            "name": g.current_user,
+            "battleroom_id": battleroom_id,
+            "teamlist": saved,
+        }), 200
     except NotFoundError:
         return jsonify({"error": "Utilisateur introuvable"}), 404
