@@ -47,6 +47,28 @@ def create_battleroom(name: str, requires_teamlist: bool = False, db_provider: C
     )
 
 
+def get_latest_battleroom(db_provider: Callable[[], sqlite3.Connection] = get_db) -> Battleroom:
+    """
+    Retourne la dernière battleroom créée (id le plus élevé).
+
+    Raises:
+        NotFoundError: Si aucune battleroom n'existe.
+    """
+    db: sqlite3.Connection = db_provider()
+    row = db.execute(
+        "SELECT id, name, date, round, requires_teamlist FROM battlerooms ORDER BY id DESC LIMIT 1"
+    ).fetchone()
+    if row is None:
+        raise NotFoundError("Aucune battleroom n'existe.")
+    return Battleroom(
+        id=row["id"],
+        name=row["name"],
+        date=row["date"],
+        round=row["round"],
+        requires_teamlist=bool(row["requires_teamlist"]),
+    )
+
+
 _BATTLEROOM_ORDER = {
     "date": "date DESC",
     "name": "name ASC",

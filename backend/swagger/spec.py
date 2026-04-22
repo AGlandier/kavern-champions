@@ -398,6 +398,24 @@ SWAGGER_TEMPLATE = {
             },
         },
 
+        "/battleroom/latest": {
+            "get": {
+                "tags": ["Battleroom"],
+                "summary": "Récupérer la dernière battleroom créée",
+                "description": (
+                    "Retourne la battleroom avec l'identifiant le plus élevé (la plus récemment créée). "
+                    "Utilisé par le bot Twitch pour résoudre automatiquement la room cible de la commande !enter."
+                ),
+                "responses": {
+                    "200": {
+                        "description": "Dernière battleroom",
+                        "schema": {"$ref": "#/definitions/Battleroom"},
+                    },
+                    "404": {"description": "Aucune battleroom n'existe"},
+                },
+            },
+        },
+
         "/battleroom/{room_id}": {
             "get": {
                 "tags": ["Battleroom"],

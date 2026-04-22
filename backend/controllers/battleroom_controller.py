@@ -125,6 +125,15 @@ def get_room_stats(room_id: int):
         return jsonify({"error": "Battleroom introuvable"}), 404
 
 
+@battleroom_bp.route("/latest", methods=["GET"])
+def get_latest_room():
+    try:
+        battleroom: Battleroom = battleroom_repository.get_latest_battleroom()
+        return jsonify(battleroom), 200
+    except NotFoundError:
+        return jsonify({"error": "Aucune battleroom n'existe"}), 404
+
+
 @battleroom_bp.route("/<room_id>", methods=["GET"])
 def get_room(room_id):
     try:
