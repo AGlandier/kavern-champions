@@ -2,7 +2,7 @@
 import { useCreateRoomForm } from './CreateRoomForm.js'
 import '../../styles/admin.css'
 
-const { roomName, creating, error, createRoom } = useCreateRoomForm()
+const { roomName, requiresTeamlist, creating, error, createRoom } = useCreateRoomForm()
 </script>
 
 <template>
@@ -15,6 +15,10 @@ const { roomName, creating, error, createRoom } = useCreateRoomForm()
       placeholder="Nom de la room"
       @keyup.enter="createRoom"
     />
+    <label class="admin__create-checkbox">
+      <input v-model="requiresTeamlist" type="checkbox" />
+      Open Team List
+    </label>
     <button class="kc-btn" :disabled="creating" @click="createRoom">
       {{ creating ? '…' : 'Créer' }}
     </button>

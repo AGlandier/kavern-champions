@@ -8,6 +8,7 @@ export function useCreateRoomForm() {
   const { adminKey, clearAdminKey } = useAdminAuth()
 
   const roomName = ref('')
+  const requiresTeamlist = ref(false)
   const creating = ref(false)
   const error = ref(null)
 
@@ -17,7 +18,7 @@ export function useCreateRoomForm() {
     creating.value = true
     error.value = null
     try {
-      const created = await battleroom.create(name, adminKey.value)
+      const created = await battleroom.create(name, requiresTeamlist.value, adminKey.value)
       roomName.value = ''
       router.push({ name: 'admin-room', params: { id: created.id } })
     } catch (e) {
@@ -32,5 +33,5 @@ export function useCreateRoomForm() {
     }
   }
 
-  return { roomName, creating, error, createRoom }
+  return { roomName, requiresTeamlist, creating, error, createRoom }
 }
