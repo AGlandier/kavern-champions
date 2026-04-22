@@ -20,6 +20,6 @@ async def enter_command(ctx) -> None:
     status = result["status"]
 
     if status == 200:
-        await ctx.reply(f"@{(ctx.author.name)} est prêt à se battre !")
+        await ctx.reply(f"@{(ctx.author.name)} est prêt pour la bagarre !")
 
     _cooldowns[username] = now
