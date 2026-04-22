@@ -32,7 +32,16 @@ CREATE TABLE IF NOT EXISTS battleroom_players (
 -- Table user
 CREATE TABLE IF NOT EXISTS user (
     name           TEXT    PRIMARY KEY,          -- clé primaire unique, chaîne
-    teamlist       TEXT    NOT NULL DEFAULT '',
     number_battle  INTEGER NOT NULL DEFAULT 0,
     password_hash  TEXT                          -- NULL = pas de mot de passe défini
+);
+
+-- Table battleroom_teamlist : teamlist d'un joueur par battleroom
+CREATE TABLE IF NOT EXISTS battleroom_teamlist (
+    battleroom_id  INTEGER NOT NULL,
+    username       TEXT    NOT NULL,
+    teamlist       TEXT    NOT NULL DEFAULT '',
+    PRIMARY KEY (battleroom_id, username),
+    FOREIGN KEY (battleroom_id) REFERENCES battlerooms(id) ON DELETE CASCADE,
+    FOREIGN KEY (username)      REFERENCES user(name)
 );
