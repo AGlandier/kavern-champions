@@ -45,7 +45,8 @@ def create():
     if not name:
         return jsonify({"error": "Le champ 'name' est requis"}), 400
 
-    battleroom: Battleroom = battleroom_repository.create_battleroom(name)
+    requires_teamlist = bool(data.get("requires_teamlist", False))
+    battleroom: Battleroom = battleroom_repository.create_battleroom(name, requires_teamlist=requires_teamlist)
     return jsonify(battleroom), 201
 
 
@@ -66,7 +67,7 @@ def get_all_rooms():
     rooms = battleroom_repository.get_all_battlerooms(limit=limit, offset=offset, query=query, order_by=order_by)
     total = battleroom_repository.count_battlerooms(query=query)
     return jsonify({
-        "battlerooms": [{"id": r.id, "name": r.name, "date": r.date, "round": r.round} for r in rooms],
+        "battlerooms": [{"id": r.id, "name": r.name, "date": r.date, "round": r.round, "requires_teamlist": r.requires_teamlist} for r in rooms],
         "total": total,
         "limit": limit,
         "offset": offset,
@@ -153,6 +154,11 @@ def next_round():
 
         # 2. Récupère les joueurs et l'historique complet (matchs + byes)
         players = battleroom_repository.get_room_players(battleroom_id)
+        if current_room.requires_teamlist:
+            players = [
+                p for p in players
+                if user_repository.get_battleroom_teamlist(p, battleroom_id)
+            ]
         past_battles = battle_repository.get_battles_by_room(battleroom_id)
         past_pairings = [
             (b.content["player1"], b.content.get("player2"))
