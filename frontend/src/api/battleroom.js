@@ -33,8 +33,8 @@ export class BattleRoomApi {
 
   // Routes admin (X-Admin-Key requis)
 
-  create(name, adminKey) {
-    return this.#client.post('/battleroom/create', { body: { name }, adminKey })
+  create(name, requiresTeamlist, adminKey) {
+    return this.#client.post('/battleroom/create', { body: { name, requires_teamlist: requiresTeamlist }, adminKey })
   }
 
   nextRound(battleroomId, adminKey) {
