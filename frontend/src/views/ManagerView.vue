@@ -14,6 +14,7 @@ const { currentUser } = useUserAuth()
 
 const username = route.query.user
 const teamlist = ref('')
+const currentBattleroomId = ref(null)
 const loading = ref(false)
 const loadError = ref(null)
 const saveSuccess = ref(false)
@@ -38,18 +39,25 @@ onMounted(async () => {
   }
   loading.value = true
   try {
-    const [stats, battleData] = await Promise.all([
-      user.getStats(username),
+    const [battleData, battleroomData] = await Promise.all([
       user.getActiveBattle(username),
+      user.getBattleroom(),
     ])
-    teamlist.value = stats.teamlist ?? ''
+
+    currentBattleroomId.value = battleroomData.battleroom_id
+
+    if (currentBattleroomId.value !== null) {
+      const stats = await user.getStats(username, currentBattleroomId.value)
+      teamlist.value = stats.teamlist ?? ''
+    }
 
     if (battleData.battle) {
       activeBattle.value = battleData.battle
       const { player1, player2 } = battleData.battle.content
+      const roomId = battleData.battle.battleroom_id
       const [p1, p2] = await Promise.allSettled([
-        player1 ? user.getStats(player1) : Promise.resolve(null),
-        player2 ? user.getStats(player2) : Promise.resolve(null),
+        player1 ? user.getStats(player1, roomId) : Promise.resolve(null),
+        player2 ? user.getStats(player2, roomId) : Promise.resolve(null),
       ])
       player1Stats.value = p1.status === 'fulfilled' ? p1.value : null
       player2Stats.value = p2.status === 'fulfilled' ? p2.value : null
@@ -64,9 +72,13 @@ onMounted(async () => {
 async function handleSave(newTeamlist) {
   saveSuccess.value = false
   saveError.value = null
+  if (currentBattleroomId.value === null) {
+    saveError.value = 'Vous n\'êtes dans aucune battleroom.'
+    return
+  }
   loading.value = true
   try {
-    await user.updateTeamlist(newTeamlist)
+    await user.updateTeamlist(currentBattleroomId.value, newTeamlist)
     teamlist.value = newTeamlist
     saveSuccess.value = true
   } catch {
