@@ -1,6 +1,6 @@
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { auth, user, ApiError } from '../api/index.js'
 import { useUserAuth } from '../composables/useUserAuth.js'
 import LoginForm from '../components/LoginForm.vue'
@@ -9,6 +9,7 @@ import '../styles/login.css'
 import '../styles/admin.css'
 
 const router = useRouter()
+const route = useRoute()
 const { login } = useUserAuth()
 
 const step = ref('username')
@@ -16,6 +17,14 @@ const username = ref('')
 const isNewUser = ref(false)
 const error = ref(null)
 const loading = ref(false)
+
+onMounted(() => {
+  const prefilledUsername = route.query.username
+  if (prefilledUsername) {
+    username.value = prefilledUsername
+    checkUser()
+  }
+})
 
 async function checkUser() {
   error.value = null
