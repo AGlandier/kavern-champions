@@ -1,4 +1,5 @@
 import logging
+import httpx
 from twitchio.ext import commands
 import config
 from commands.enter import enter_command
@@ -17,6 +18,20 @@ class KavernBot(commands.Bot):
 
     async def event_ready(self):
         logging.info(f"Bot connecté : {self.nick}")
+
+    async def event_token_expired(self):
+        async with httpx.AsyncClient() as client:
+            r = await client.post("https://id.twitch.tv/oauth2/token", data={
+                "grant_type": "refresh_token",
+                "refresh_token": config.TWITCH_REFRESH_TOKEN,
+                "client_id": config.TWITCH_CLIENT_ID,
+                "client_secret": config.TWITCH_CLIENT_SECRET,
+            })
+        data = r.json()
+        config.TWITCH_REFRESH_TOKEN = data["refresh_token"]
+        config.save_tokens(data["access_token"], data["refresh_token"])
+        logging.info("Token Twitch rafraîchi")
+        return data["access_token"]
 
     async def event_error(self, error: Exception, data=None):
         logging.error("Erreur non gérée : %s", error, exc_info=error)
