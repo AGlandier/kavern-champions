@@ -2,6 +2,7 @@
 decorators.py — Décorateurs de protection des routes Flask.
 """
 
+import secrets
 from functools import wraps
 from flask import g, request, jsonify, current_app
 from services.token_service import verify_user_token
@@ -12,7 +13,7 @@ def require_admin_key(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         key = request.headers.get("X-Admin-Key", "")
-        if key != current_app.config["ADMIN_KEY"]:
+        if not secrets.compare_digest(key, current_app.config["ADMIN_KEY"]):
             return jsonify({"error": "Unauthorized — invalid admin key"}), 401
         return f(*args, **kwargs)
     return decorated
@@ -40,7 +41,7 @@ def require_admin_or_user_token(f):
     """
     @wraps(f)
     def decorated(*args, **kwargs):
-        if request.headers.get("X-Admin-Key", "") == current_app.config["ADMIN_KEY"]:
+        if secrets.compare_digest(request.headers.get("X-Admin-Key", ""), current_app.config["ADMIN_KEY"]):
             g.is_admin = True
             g.current_user = None
             return f(*args, **kwargs)
