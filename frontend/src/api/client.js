@@ -22,7 +22,7 @@ export class ApiClient {
   }
 
   async request(method, path, { body, query, adminKey } = {}) {
-    const url = new URL(this.#baseUrl + path)
+    const url = new URL(this.#baseUrl + path, window.location.origin)
 
     if (query) {
       for (const [k, v] of Object.entries(query)) {

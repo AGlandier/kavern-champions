@@ -26,6 +26,7 @@ export function useCreateRoomForm() {
         clearAdminKey()
         router.push({ name: 'admin-login' })
       } else {
+        console.error('[createRoom]', e)
         error.value = 'Erreur lors de la création.'
       }
     } finally {
