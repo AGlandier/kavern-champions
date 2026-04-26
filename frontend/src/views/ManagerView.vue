@@ -1,9 +1,10 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { user, battle, battleroom } from '../api/index.js'
 import { formatRoomCode } from '../utils/formatRoomCode.js'
 import { useUserAuth } from '../composables/useUserAuth.js'
+import { useSocket } from '../composables/useSocket.js'
 import UpdateTeamlistForm from '../components/UpdateTeamlistForm.vue'
 import '../styles/admin.css'
 import '../styles/manager.css'
@@ -32,6 +33,12 @@ const roomCode = ref('')
 const settingRoom = ref(false)
 const setRoomError = ref(null)
 const setRoomSuccess = ref(false)
+
+function onRoomCodeUpdated({ battle_id, champions_room_id }) {
+  if (activeBattle.value && activeBattle.value.id === battle_id) {
+    activeBattle.value.content.champions_room_id = champions_room_id
+  }
+}
 
 onMounted(async () => {
   if (!currentUser.value || currentUser.value !== username) {
@@ -67,11 +74,25 @@ onMounted(async () => {
       player1Stats.value = p1.status === 'fulfilled' ? p1.value : null
       player2Stats.value = p2.status === 'fulfilled' ? p2.value : null
     }
+
+    if (currentBattleroomId.value !== null) {
+      const socket = useSocket()
+      socket.emit('join_battleroom', { battleroom_id: currentBattleroomId.value })
+      socket.on('room_code_updated', onRoomCodeUpdated)
+    }
   } catch {
     loadError.value = 'Impossible de charger les données.'
   } finally {
     loading.value = false
   }
+})
+
+onUnmounted(() => {
+  const socket = useSocket()
+  if (currentBattleroomId.value !== null) {
+    socket.emit('leave_battleroom', { battleroom_id: currentBattleroomId.value })
+  }
+  socket.off('room_code_updated', onRoomCodeUpdated)
 })
 
 async function handleSave(newTeamlist) {
