@@ -114,11 +114,21 @@ def get_active_battle():
 # POST /user/teamlist
 # Met à jour la teamlist d'un utilisateur pour une battleroom
 # ------------------------------------------------------------------
+_TEAMLIST_ALLOWED_PREFIXES = ("https://pokepast.es/", "https://www.vrpastes.com/")
+
+
+def _is_valid_teamlist_url(url: str) -> bool:
+    return any(url.startswith(p) for p in _TEAMLIST_ALLOWED_PREFIXES)
+
+
 @user_bp.route("/teamlist", methods=["POST"])
 @require_user_token
 def update_teamlist():
     data = request.get_json(silent=True) or {}
     teamlist = data.get("teamlist", "").strip()
+
+    if not _is_valid_teamlist_url(teamlist):
+        return jsonify({"error": "La teamlist doit être une URL pokepast.es ou vrpastes.com"}), 400
 
     battleroom_id = data.get("battleroom_id")
     if battleroom_id is None:

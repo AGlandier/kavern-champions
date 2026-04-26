@@ -179,3 +179,9 @@
   flex: 1;
   min-width: 0;
 }
+
+.teamlist-form__error {
+  font-size: 0.8rem;
+  color: #e53e3e;
+  margin-top: 0.25rem;
+}
