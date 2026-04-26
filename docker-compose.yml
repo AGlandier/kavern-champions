@@ -1,6 +1,9 @@
 services:
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_TWITCH_PARENT: ${VITE_TWITCH_PARENT:-localhost}
     ports:
       - "80:80"
     depends_on:
