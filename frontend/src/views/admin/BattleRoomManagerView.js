@@ -1,7 +1,8 @@
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { battleroom, ApiError } from '../../api/index.js'
 import { useAdminAuth } from '../../composables/useAdminAuth.js'
+import { useSocket } from '../../composables/useSocket.js'
 
 export function useBattleRoomManager() {
   const route = useRoute()
@@ -74,6 +75,11 @@ export function useBattleRoomManager() {
     if (b) b.finished = true
   }
 
+  function onRoomCodeUpdated({ battle_id, champions_room_id }) {
+    const b = battles.value.find(b => b.id === battle_id)
+    if (b) b.content.champions_room_id = champions_room_id
+  }
+
   function prevRound() { displayRound.value-- }
   function nextRound() { displayRound.value++ }
 
@@ -81,6 +87,15 @@ export function useBattleRoomManager() {
   onMounted(async () => {
     await fetchRoom()
     await fetchBattles()
+    const socket = useSocket()
+    socket.emit('join_battleroom', { battleroom_id: roomId.value })
+    socket.on('room_code_updated', onRoomCodeUpdated)
+  })
+
+  onUnmounted(() => {
+    const socket = useSocket()
+    socket.emit('leave_battleroom', { battleroom_id: roomId.value })
+    socket.off('room_code_updated', onRoomCodeUpdated)
   })
 
   return {
