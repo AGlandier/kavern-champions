@@ -80,6 +80,10 @@ export function useBattleRoomManager() {
     if (b) b.content.champions_room_id = champions_room_id
   }
 
+  function handleBattleEnded({ battle_id }) {
+    onBattleEnded(battle_id)
+  }
+
   function prevRound() { displayRound.value-- }
   function nextRound() { displayRound.value++ }
 
@@ -90,12 +94,14 @@ export function useBattleRoomManager() {
     const socket = useSocket()
     socket.emit('join_battleroom', { battleroom_id: roomId.value })
     socket.on('room_code_updated', onRoomCodeUpdated)
+    socket.on('battle_ended', handleBattleEnded)
   })
 
   onUnmounted(() => {
     const socket = useSocket()
     socket.emit('leave_battleroom', { battleroom_id: roomId.value })
     socket.off('room_code_updated', onRoomCodeUpdated)
+    socket.off('battle_ended', handleBattleEnded)
   })
 
   return {

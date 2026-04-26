@@ -477,4 +477,9 @@ def end_battle():
         if player is not None:
             user_repository.increment_number_battle(player)
 
+    socketio.emit(
+        "battle_ended",
+        {"battle_id": battle.id, "battleroom_id": battle.battleroom_id},
+        to=f"battleroom:{battle.battleroom_id}",
+    )
     return jsonify({"battle_id": battle.id, "round": battle.round, "finished": battle.finished, "content": battle.content}), 200
