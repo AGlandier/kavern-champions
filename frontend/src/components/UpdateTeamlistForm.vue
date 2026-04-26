@@ -14,11 +14,13 @@ watch(() => props.modelValue, (val) => { teamlist.value = val })
 
 <template>
   <form class="teamlist-form" @submit.prevent="emit('submit', teamlist)">
-    <textarea
+    <label class="teamlist-form__label" for="teamlist-input">Teamlist</label>
+    <input
+      id="teamlist-input"
       v-model="teamlist"
-      class="kc-input teamlist-form__textarea"
-      placeholder="Entrez votre teamlist..."
-      rows="6"
+      class="kc-input teamlist-form__input"
+      type="text"
+      placeholder="www.pokepast.es/team"
     />
     <button type="submit" class="kc-btn" :disabled="loading">
       Enregistrer

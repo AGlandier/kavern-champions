@@ -163,14 +163,19 @@
 
 .teamlist-form {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: 0.75rem;
-  align-items: flex-start;
 }
 
-.teamlist-form__textarea {
-  width: 100%;
-  resize: vertical;
-  font-family: monospace;
-  min-height: 8rem;
+.teamlist-form__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.teamlist-form__input {
+  flex: 1;
+  min-width: 0;
 }

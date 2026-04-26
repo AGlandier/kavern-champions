@@ -221,7 +221,6 @@ async function handleEndBattle() {
       </section>
 
       <section v-if="currentBattleroomRequiresTeamlist" class="manager__section">
-        <h2 class="manager__section-title">Teamlist</h2>
         <UpdateTeamlistForm :model-value="teamlist" :loading="loading" @submit="handleSave" />
         <p v-if="saveSuccess" class="manager__success">Teamlist mise à jour.</p>
         <p v-if="saveError" class="manager__error">{{ saveError }}</p>
