@@ -5,12 +5,19 @@ from controllers.battleroom_controller import battleroom_bp
 from controllers.user_controller import user_bp
 from controllers.auth_controller import auth_bp
 from database.db import init_db
+from extensions import socketio
 
 
 def create_app(config_class=Config) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config_class)
     CORS(app, origins=app.config.get("CORS_ORIGINS", "*"))
+
+    socketio.init_app(
+        app,
+        cors_allowed_origins=app.config.get("CORS_ORIGINS", "*"),
+        async_mode="eventlet",
+    )
 
     # Init DB
     with app.app_context():
@@ -32,4 +39,4 @@ def create_app(config_class=Config) -> Flask:
 
 if __name__ == "__main__":
     app = create_app()
-    app.run(host="0.0.0.0", port=5000)
+    socketio.run(app, host="0.0.0.0", port=5000)
