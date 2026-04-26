@@ -146,6 +146,7 @@ async function handleEndBattle() {
 
         <p v-if="loading" class="manager__muted">Chargement…</p>
 
+        <p v-else-if="!activeBattle && currentBattleroomRequiresTeamlist && !teamlist" class="manager__muted">Ajoutez votre teamlist pour démarrer !</p>
         <p v-else-if="!activeBattle" class="manager__muted">Aucune battle en cours.</p>
 
         <div v-else class="manager__battle-card">
