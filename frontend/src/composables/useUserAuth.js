@@ -13,8 +13,8 @@ export function useUserAuth() {
   async function login(name, password) {
     const data = await auth.login(name, password)
     localStorage.setItem(TOKEN_KEY, data.token)
-    localStorage.setItem(USER_KEY, name)
-    currentUser.value = name
+    localStorage.setItem(USER_KEY, data.name)
+    currentUser.value = data.name
     return data
   }
 

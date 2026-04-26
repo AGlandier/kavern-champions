@@ -25,7 +25,7 @@ auth_bp = Blueprint("auth", __name__)
 @auth_bp.route("/register", methods=["POST"])
 def register():
     data = request.get_json(silent=True) or {}
-    name = data.get("name", "").strip()
+    name = data.get("name", "").strip().lower()
     password = data.get("password", "")
 
     if not name:
@@ -48,7 +48,7 @@ def register():
 @auth_bp.route("/set-password", methods=["POST"])
 def set_password():
     data = request.get_json(silent=True) or {}
-    name = data.get("name", "").strip()
+    name = data.get("name", "").strip().lower()
     new_password = data.get("password", "")
     current_password = data.get("current_password", "")
 
@@ -76,7 +76,7 @@ def set_password():
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json(silent=True) or {}
-    name = data.get("name", "").strip()
+    name = data.get("name", "").strip().lower()
     password = data.get("password", "")
 
     if not name or not password:

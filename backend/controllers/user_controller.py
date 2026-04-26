@@ -24,7 +24,7 @@ user_bp = Blueprint("user", __name__)
 # ------------------------------------------------------------------
 @user_bp.route("/secured", methods=["GET"])
 def is_secured():
-    username = request.args.get("name", "").strip()
+    username = request.args.get("name", "").strip().lower()
     if not username:
         return jsonify({"error": "Le paramètre de requête 'name' est requis"}), 400
 
@@ -43,7 +43,7 @@ def is_secured():
 # ------------------------------------------------------------------
 @user_bp.route("/stats", methods=["GET"])
 def get_stats():
-    username = request.args.get("name", "").strip()
+    username = request.args.get("name", "").strip().lower()
     if not username:
         return jsonify({"error": "Le paramètre de requête 'name' est requis"}), 400
 
@@ -86,7 +86,7 @@ def get_user_battleroom():
 # ------------------------------------------------------------------
 @user_bp.route("/active-battle", methods=["GET"])
 def get_active_battle():
-    username = request.args.get("name", "").strip()
+    username = request.args.get("name", "").strip().lower()
     if not username:
         return jsonify({"error": "Le paramètre de requête 'name' est requis"}), 400
 
