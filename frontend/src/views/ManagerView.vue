@@ -62,21 +62,16 @@ async function onRoundStarted({ battles }) {
 }
 
 onMounted(async () => {
-  console.log('[Manager] onMounted — username (URL):', username, '| currentUser (localStorage):', currentUser.value)
   loading.value = true
   if (!currentUser.value || currentUser.value !== username) {
-    console.warn('[Manager] Auth check failed → redirect login. currentUser:', currentUser.value, '!== username:', username)
     router.push({ name: 'login' })
     return
   }
-  console.log('[Manager] Auth OK, démarrage des appels API')
   try {
     const [battleData, battleroomData] = await Promise.all([
       user.getActiveBattle(username),
       user.getBattleroom(),
     ])
-    console.log('[Manager] getActiveBattle →', battleData)
-    console.log('[Manager] getBattleroom →', battleroomData)
 
     currentBattleroomId.value = battleroomData.battleroom_id
 
@@ -85,19 +80,13 @@ onMounted(async () => {
         user.getStats(username, currentBattleroomId.value),
         battleroom.getById(currentBattleroomId.value),
       ])
-      console.log('[Manager] getStats →', stats)
-      console.log('[Manager] getBattleroomById →', roomData)
       teamlist.value = stats.teamlist ?? ''
       currentBattleroomRequiresTeamlist.value = roomData.requires_teamlist ?? false
-    } else {
-      console.warn('[Manager] battleroom_id est null → pas de stats/teamlist chargés')
     }
 
     if (battleData.battle) {
       activeBattle.value = battleData.battle
       await loadPlayerStats(battleData.battle)
-    } else {
-      console.warn('[Manager] Aucune battle active retournée par l\'API')
     }
 
     if (currentBattleroomId.value !== null) {
@@ -106,8 +95,7 @@ onMounted(async () => {
       socket.on('room_code_updated', onRoomCodeUpdated)
       socket.on('round_started', onRoundStarted)
     }
-  } catch (err) {
-    console.error('[Manager] Erreur lors du chargement:', err)
+  } catch {
     loadError.value = 'Impossible de charger les données.'
   } finally {
     loading.value = false
