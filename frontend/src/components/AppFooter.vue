@@ -1,5 +1,7 @@
 <script setup>
 import '../styles/footer.css'
+
+const version = __APP_VERSION__
 </script>
 
 <template>
@@ -29,5 +31,7 @@ import '../styles/footer.css'
       </svg>
       Twitch
     </a>
+
+    <span class="footer__version">v{{ version }}</span>
   </footer>
 </template>

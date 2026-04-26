@@ -26,3 +26,9 @@
   width: 1.125rem;
   height: 1.125rem;
 }
+
+.footer__version {
+  margin-left: auto;
+  font-size: 0.75rem;
+  opacity: 0.5;
+}
