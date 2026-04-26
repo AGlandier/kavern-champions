@@ -24,6 +24,7 @@ const {
             <th>Nom</th>
             <th>Nombre de joueurs</th>
             <th>Création</th>
+            <th>OTS/CTS</th>
             <th>Etat</th>
             <th></th>
           </tr>
