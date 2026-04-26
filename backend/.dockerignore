@@ -1,0 +1,15 @@
+.venv/
+.env
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+tests/
+contexts/
+reset_db.py
+swagger/

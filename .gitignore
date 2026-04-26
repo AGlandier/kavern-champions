@@ -46,3 +46,6 @@ backend/reset_db.py
 # Twitch bot — tokens rotatifs et secrets locaux
 twitch-bot/.env
 twitch-bot/tokens.json
+
+# Production secrets
+.env.prod
