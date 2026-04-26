@@ -154,19 +154,35 @@ volumes:
 
 ---
 
-### Étape 3 — Configurer le DNS
+### Étape 3 — Créer le sous-domaine et configurer le DNS
 
-Dans Cloudflare Dashboard → ton domaine → **DNS** → **Add record** :
+#### 3.1 — Créer le sous-domaine dans Cloudflare
 
-| Type | Name | Value | Proxy | Destination |
-|---|---|---|---|---|
-| A | `@` | IP de l'hébergeur de ton CV | Proxied | `monpseudo.com` → CV |
-| A | `www` | IP de l'hébergeur de ton CV | Proxied | `www.monpseudo.com` → CV |
-| A | `kavernchampions` | `65.21.x.x` (ton VPS Hetzner) | Proxied | `kavernchampions.monpseudo.com` → cette app |
+1. Aller sur [dash.cloudflare.com](https://dash.cloudflare.com)
+2. Cliquer sur ton domaine (ex: `monpseudo.com`)
+3. Dans le menu de gauche → **DNS** → **Records**
+4. Cliquer **Add record** et renseigner :
 
-> Si ton CV est sur une plateforme tierce (GitHub Pages, Vercel, etc.), elle t'indiquera quelle IP ou valeur CNAME utiliser. Si ton CV est aussi sur le même VPS, les deux `A` pointent vers la même IP.
+| Champ | Valeur |
+|---|---|
+| Type | `A` |
+| Name | `kavernchampions` |
+| IPv4 address | `65.21.x.x` *(IP de ton VPS Hetzner, récupérée à l'étape 2)* |
+| Proxy status | **Proxied** (nuage orange) |
+| TTL | Auto |
 
-> Le proxy Cloudflare cache la vraie IP et gère le SSL automatiquement. La propagation DNS prend quelques minutes.
+5. Cliquer **Save**
+
+Le sous-domaine `kavernchampions.monpseudo.com` est maintenant créé. Le proxy Cloudflare (nuage orange) active le SSL automatiquement et masque la vraie IP du serveur.
+
+> La propagation DNS prend quelques minutes à quelques heures au maximum.
+
+#### 3.2 — Vérifier la propagation
+
+```bash
+# Depuis ton poste local, attendre que cette commande retourne l'IP de ton VPS
+nslookup kavernchampions.monpseudo.com
+```
 
 ---
 
