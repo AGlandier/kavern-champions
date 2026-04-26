@@ -62,11 +62,11 @@ async function onRoundStarted({ battles }) {
 }
 
 onMounted(async () => {
+  loading.value = true
   if (!currentUser.value || currentUser.value !== username) {
     router.push({ name: 'login' })
     return
   }
-  loading.value = true
   try {
     const [battleData, battleroomData] = await Promise.all([
       user.getActiveBattle(username),
