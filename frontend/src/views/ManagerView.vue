@@ -34,9 +34,30 @@ const settingRoom = ref(false)
 const setRoomError = ref(null)
 const setRoomSuccess = ref(false)
 
+async function loadPlayerStats(battleData) {
+  const { player1, player2 } = battleData.content
+  const roomId = battleData.battleroom_id
+  const [p1, p2] = await Promise.allSettled([
+    player1 ? user.getStats(player1, roomId) : Promise.resolve(null),
+    player2 ? user.getStats(player2, roomId) : Promise.resolve(null),
+  ])
+  player1Stats.value = p1.status === 'fulfilled' ? p1.value : null
+  player2Stats.value = p2.status === 'fulfilled' ? p2.value : null
+}
+
 function onRoomCodeUpdated({ battle_id, champions_room_id }) {
   if (activeBattle.value && activeBattle.value.id === battle_id) {
     activeBattle.value.content.champions_room_id = champions_room_id
+  }
+}
+
+async function onRoundStarted({ battles }) {
+  const myBattle = battles.find(b =>
+    !b.finished && (b.content.player1 === username || b.content.player2 === username)
+  )
+  if (myBattle) {
+    activeBattle.value = myBattle
+    await loadPlayerStats(myBattle)
   }
 }
 
@@ -65,20 +86,14 @@ onMounted(async () => {
 
     if (battleData.battle) {
       activeBattle.value = battleData.battle
-      const { player1, player2 } = battleData.battle.content
-      const roomId = battleData.battle.battleroom_id
-      const [p1, p2] = await Promise.allSettled([
-        player1 ? user.getStats(player1, roomId) : Promise.resolve(null),
-        player2 ? user.getStats(player2, roomId) : Promise.resolve(null),
-      ])
-      player1Stats.value = p1.status === 'fulfilled' ? p1.value : null
-      player2Stats.value = p2.status === 'fulfilled' ? p2.value : null
+      await loadPlayerStats(battleData.battle)
     }
 
     if (currentBattleroomId.value !== null) {
       const socket = useSocket()
       socket.emit('join_battleroom', { battleroom_id: currentBattleroomId.value })
       socket.on('room_code_updated', onRoomCodeUpdated)
+      socket.on('round_started', onRoundStarted)
     }
   } catch {
     loadError.value = 'Impossible de charger les données.'
@@ -93,6 +108,7 @@ onUnmounted(() => {
     socket.emit('leave_battleroom', { battleroom_id: currentBattleroomId.value })
   }
   socket.off('room_code_updated', onRoomCodeUpdated)
+  socket.off('round_started', onRoundStarted)
 })
 
 async function handleSave(newTeamlist) {

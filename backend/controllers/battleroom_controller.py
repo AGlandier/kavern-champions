@@ -208,6 +208,15 @@ def next_round():
             for p in pairings
         ]
 
+        socket_battles = [
+            {"id": b.id, "battleroom_id": b.battleroom_id, "round": b.round, "finished": b.finished, "content": b.content}
+            for b in battles
+        ]
+        socketio.emit(
+            "round_started",
+            {"battleroom_id": battleroom.id, "round": battleroom.round, "battles": socket_battles},
+            to=f"battleroom:{battleroom_id}",
+        )
         return jsonify({
             "battleroom_id": battleroom.id,
             "round": battleroom.round,
@@ -477,4 +486,9 @@ def end_battle():
         if player is not None:
             user_repository.increment_number_battle(player)
 
+    socketio.emit(
+        "battle_ended",
+        {"battle_id": battle.id, "battleroom_id": battle.battleroom_id},
+        to=f"battleroom:{battle.battleroom_id}",
+    )
     return jsonify({"battle_id": battle.id, "round": battle.round, "finished": battle.finished, "content": battle.content}), 200
