@@ -3,7 +3,7 @@ services:
     build:
       context: ./frontend
       args:
-        VITE_TWITCH_PARENT: ${VITE_TWITCH_PARENT:-localhost}
+        VITE_TWITCH_PARENT: champions.ksomon.dev
     ports:
       - "80:80"
     depends_on:
