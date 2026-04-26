@@ -6,14 +6,30 @@ Préfixe : /battleroom
 import re
 
 from flask import Blueprint, g, jsonify, request
+from flask_socketio import join_room, leave_room
 
 from controllers.decorators import require_admin_key, require_user_token, require_admin_or_user_token
 from db_connector import battleroom_repository, battle_repository, user_repository
 from db_connector.exceptions import NotFoundError
 from db_connector.models import Battleroom
+from extensions import socketio
 from kchampions_core import make_pairings
 
 battleroom_bp = Blueprint("battleroom", __name__)
+
+
+@socketio.on("join_battleroom")
+def handle_join_battleroom(data):
+    room_id = data.get("battleroom_id")
+    if room_id is not None:
+        join_room(f"battleroom:{room_id}")
+
+
+@socketio.on("leave_battleroom")
+def handle_leave_battleroom(data):
+    room_id = data.get("battleroom_id")
+    if room_id is not None:
+        leave_room(f"battleroom:{room_id}")
 
 _ALLOWED_ORDER_BY = {"date", "name"}
 
@@ -421,6 +437,11 @@ def set_battle_room():
         return jsonify({"error": f"'{g.current_user}' n'est pas participant de cette battle."}), 403
 
     battle = battle_repository.set_champions_room_id(battle_id, code)
+    socketio.emit(
+        "room_code_updated",
+        {"battle_id": battle.id, "champions_room_id": code},
+        to=f"battleroom:{battle.battleroom_id}",
+    )
     return jsonify({
         "battle_id": battle.id,
         "champions_room_id": battle.content["champions_room_id"],
