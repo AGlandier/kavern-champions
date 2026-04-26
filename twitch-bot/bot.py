@@ -39,6 +39,10 @@ class KavernBot(commands.Bot):
     async def event_command_error(self, ctx: commands.Context, error: Exception):
         logging.error("Erreur commande '%s' par %s : %s", ctx.command, ctx.author.name, error, exc_info=error)
 
+    @commands.command(name="ping")
+    async def ping(self, ctx: commands.Context):
+        await ctx.reply("pong !")
+
     @commands.command(name="enter")
     async def enter(self, ctx: commands.Context):
         await enter_command(ctx)
