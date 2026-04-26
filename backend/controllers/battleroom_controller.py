@@ -208,6 +208,15 @@ def next_round():
             for p in pairings
         ]
 
+        socket_battles = [
+            {"id": b.id, "battleroom_id": b.battleroom_id, "round": b.round, "finished": b.finished, "content": b.content}
+            for b in battles
+        ]
+        socketio.emit(
+            "round_started",
+            {"battleroom_id": battleroom.id, "round": battleroom.round, "battles": socket_battles},
+            to=f"battleroom:{battleroom_id}",
+        )
         return jsonify({
             "battleroom_id": battleroom.id,
             "round": battleroom.round,
