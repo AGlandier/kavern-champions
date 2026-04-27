@@ -249,7 +249,7 @@ def enter():
     battleroom_id = data.get("battleroom_id")
     username = data.get("username", "").strip()
 
-    if not battleroom_id or not username:
+    if battleroom_id is None or not username:
         return jsonify({"error": "Les champs 'battleroom_id' et 'username' sont requis"}), 400
 
     current_room = battleroom_repository.get_battleroom_for_user(username)
