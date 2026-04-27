@@ -21,14 +21,14 @@ const loading = ref(false)
 onMounted(() => {
   const prefilledUsername = route.query.username
   if (prefilledUsername) {
-    username.value = prefilledUsername
+    username.value = prefilledUsername.toLowerCase()
     checkUser()
   }
 })
 
 async function checkUser() {
   error.value = null
-  const name = username.value.trim()
+  const name = username.value.trim().toLowerCase()
   if (!name) return
   loading.value = true
   try {
@@ -51,7 +51,7 @@ async function handleLogin(password) {
   error.value = null
   loading.value = true
   try {
-    await login(username.value.trim(), password)
+    await login(username.value.trim().toLowerCase(), password)
     loading.value = false
     router.push({ name: 'home' })
   } catch {
@@ -65,11 +65,11 @@ async function handleSetPassword(password) {
   loading.value = true
   try {
     if (isNewUser.value) {
-      await auth.register(username.value.trim(), password)
+      await auth.register(username.value.trim().toLowerCase(), password)
     } else {
-      await auth.setPassword(username.value.trim(), password)
+      await auth.setPassword(username.value.trim().toLowerCase(), password)
     }
-    await login(username.value.trim(), password)
+    await login(username.value.trim().toLowerCase(), password)
     loading.value = false
     router.push({ name: 'home' })
   } catch {
