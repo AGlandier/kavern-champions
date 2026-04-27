@@ -34,6 +34,9 @@ const settingRoom = ref(false)
 const setRoomError = ref(null)
 const setRoomSuccess = ref(false)
 
+const dropping = ref(false)
+const dropError = ref(null)
+
 async function loadPlayerStats(battleData) {
   const { player1, player2 } = battleData.content
   const roomId = battleData.battleroom_id
@@ -153,6 +156,25 @@ async function handleSetRoom() {
   }
 }
 
+async function handleDrop() {
+  if (!window.confirm('Souhaitez-vous vraiment quitter ? Toute partie en cours sera abandonnée.')) return
+  dropping.value = true
+  dropError.value = null
+  try {
+    const socket = useSocket()
+    socket.emit('leave_battleroom', { battleroom_id: currentBattleroomId.value })
+    await battleroom.dropSelf(currentBattleroomId.value)
+    currentBattleroomId.value = null
+    activeBattle.value = null
+    player1Stats.value = null
+    player2Stats.value = null
+  } catch {
+    dropError.value = 'Erreur lors du drop.'
+  } finally {
+    dropping.value = false
+  }
+}
+
 async function handleEndBattle() {
   endBattleError.value = null
   endBattleSuccess.value = false
@@ -255,6 +277,13 @@ async function handleEndBattle() {
             <p v-if="endBattleSuccess" class="manager__success">Battle terminée.</p>
             <p v-if="endBattleError" class="manager__error">{{ endBattleError }}</p>
           </div>
+        </div>
+
+        <div v-if="currentBattleroomId !== null" class="manager__drop">
+          <button class="kc-btn kc-btn--danger" :disabled="dropping" @click="handleDrop">
+            {{ dropping ? '…' : 'Drop' }}
+          </button>
+          <p v-if="dropError" class="manager__error">{{ dropError }}</p>
         </div>
       </section>
 
