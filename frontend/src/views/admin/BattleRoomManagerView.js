@@ -1,6 +1,6 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { battleroom, ApiError } from '../../api/index.js'
+import { battleroom, user, ApiError } from '../../api/index.js'
 import { useAdminAuth } from '../../composables/useAdminAuth.js'
 import { useSocket } from '../../composables/useSocket.js'
 
@@ -11,12 +11,19 @@ export function useBattleRoomManager() {
 
   const roomId = computed(() => Number(route.query.id))
 
+  const activeTab = ref('rounds')
+
   const room = ref(null)
   const battles = ref([])
   const displayRound = ref(1)
   const loading = ref(false)
   const error = ref(null)
   const nextRoundLoading = ref(false)
+
+  const players = ref([])
+  const playersLoading = ref(false)
+  const playersError = ref(null)
+  const dropLoading = ref({})
 
   const hasPrevRound = computed(() => displayRound.value > 1)
   const hasNextRound = computed(() => room.value && displayRound.value < room.value.round)
@@ -84,8 +91,49 @@ export function useBattleRoomManager() {
     onBattleEnded(battle_id)
   }
 
+  async function fetchPlayers() {
+    playersLoading.value = true
+    playersError.value = null
+    try {
+      const data = await battleroom.getPlayers(roomId.value)
+      const usernames = data.players ?? data
+      const stats = await Promise.allSettled(
+        usernames.map(u => user.getStats(u, roomId.value))
+      )
+      players.value = usernames.map((username, i) => ({
+        username,
+        teamlist: stats[i].status === 'fulfilled' ? stats[i].value.teamlist : '',
+      }))
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) handleUnauthorized()
+      else playersError.value = 'Impossible de charger les joueurs.'
+    } finally {
+      playersLoading.value = false
+    }
+  }
+
+  async function dropPlayer(username) {
+    dropLoading.value = { ...dropLoading.value, [username]: true }
+    playersError.value = null
+    try {
+      await battleroom.dropPlayer(roomId.value, username, adminKey.value)
+      players.value = players.value.filter(p => p.username !== username)
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) handleUnauthorized()
+      else playersError.value = `Impossible de drop ${username}.`
+    } finally {
+      const next = { ...dropLoading.value }
+      delete next[username]
+      dropLoading.value = next
+    }
+  }
+
   function prevRound() { displayRound.value-- }
   function nextRound() { displayRound.value++ }
+
+  watch(activeTab, (tab) => {
+    if (tab === 'players') fetchPlayers()
+  })
 
   watch(displayRound, fetchBattles)
   onMounted(async () => {
@@ -105,8 +153,11 @@ export function useBattleRoomManager() {
   })
 
   return {
+    activeTab,
     room, battles, displayRound, loading, error, nextRoundLoading,
     hasPrevRound, hasNextRound, allBattlesFinished,
     goNextRound, onBattleEnded, prevRound, nextRound,
+    players, playersLoading, playersError, dropLoading,
+    fetchPlayers, dropPlayer,
   }
 }

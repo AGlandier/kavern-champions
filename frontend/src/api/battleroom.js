@@ -51,5 +51,12 @@ export class BattleRoomApi {
     })
   }
 
+  dropPlayer(battleroomId, username, adminKey) {
+    return this.#client.post('/battleroom/drop', {
+      body: { battleroom_id: battleroomId, username },
+      adminKey,
+    })
+  }
+
   // /battleroom/enter est intentionnellement absent — appelé par le bot Twitch uniquement
 }
