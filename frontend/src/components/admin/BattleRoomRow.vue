@@ -16,9 +16,12 @@ const { timeAgo, goToManager } = useBattleRoomRow(props)
     <td>{{ playerCount ?? '…' }}</td>
     <td>{{ timeAgo(room.date) }}</td>
     <td>{{ room.requires_teamlist ? 'OTS' : 'CTS' }}</td>
-    <td><span class="room-row__status--open">Ouverte</span></td>
     <td>
-      <button class="room-row__manage" @click="goToManager">Manage</button>
+      <span v-if="room.closed" class="room-row__status--closed">Fermée</span>
+      <span v-else class="room-row__status--open">Ouverte</span>
+    </td>
+    <td>
+      <button class="room-row__manage" :disabled="room.closed" @click="goToManager">Manage</button>
     </td>
   </tr>
 </template>

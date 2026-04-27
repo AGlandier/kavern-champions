@@ -83,7 +83,7 @@ def get_all_rooms():
     rooms = battleroom_repository.get_all_battlerooms(limit=limit, offset=offset, query=query, order_by=order_by)
     total = battleroom_repository.count_battlerooms(query=query)
     return jsonify({
-        "battlerooms": [{"id": r.id, "name": r.name, "date": r.date, "round": r.round, "requires_teamlist": r.requires_teamlist} for r in rooms],
+        "battlerooms": [{"id": r.id, "name": r.name, "date": r.date, "round": r.round, "requires_teamlist": r.requires_teamlist, "closed": r.closed} for r in rooms],
         "total": total,
         "limit": limit,
         "offset": offset,
@@ -349,8 +349,8 @@ def end_room():
         return jsonify({"error": "Le champ 'battleroom_id' est requis"}), 400
 
     try:
-        battleroom_repository.delete_battleroom(battleroom_id)
-        return jsonify({"message": f"Battleroom {battleroom_id} terminée et supprimée"}), 200
+        battleroom_repository.close_battleroom(battleroom_id)
+        return jsonify({"message": f"Battleroom {battleroom_id} fermée"}), 200
     except NotFoundError:
         return jsonify({"error": "Battleroom introuvable"}), 404
 

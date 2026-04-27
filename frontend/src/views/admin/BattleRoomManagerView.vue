@@ -11,6 +11,7 @@ const {
   goNextRound, onBattleEnded, prevRound, nextRound,
   players, playersLoading, playersError, dropLoading,
   dropPlayer,
+  closeRoom, closeRoomLoading, closeRoomError,
 } = useBattleRoomManager()
 </script>
 
@@ -29,7 +30,11 @@ const {
       >
         {{ nextRoundLoading ? '…' : 'Round suivant' }}
       </button>
+      <button class="kc-btn kc-btn--danger" :disabled="closeRoomLoading || room?.closed" @click="closeRoom">
+        {{ closeRoomLoading ? '…' : 'Fermer la room' }}
+      </button>
     </div>
+    <p v-if="closeRoomError" class="admin__error">{{ closeRoomError }}</p>
 
     <!-- Onglets -->
     <div class="admin__tabs">

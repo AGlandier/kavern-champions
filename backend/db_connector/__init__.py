@@ -6,7 +6,7 @@ from .battleroom_repository import (
     enter_battleroom,
     get_room_players,
     leave_battleroom,
-    delete_battleroom,
+    close_battleroom,
 )
 from .battle_repository import (
     create_battle,

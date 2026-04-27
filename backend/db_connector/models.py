@@ -14,6 +14,7 @@ class Battleroom:
     date: str
     round: int
     requires_teamlist: bool
+    closed: bool = False
 
 
 @dataclass

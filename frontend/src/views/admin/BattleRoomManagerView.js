@@ -19,6 +19,8 @@ export function useBattleRoomManager() {
   const loading = ref(false)
   const error = ref(null)
   const nextRoundLoading = ref(false)
+  const closeRoomLoading = ref(false)
+  const closeRoomError = ref(null)
 
   const players = ref([])
   const playersLoading = ref(false)
@@ -128,6 +130,21 @@ export function useBattleRoomManager() {
     }
   }
 
+  async function closeRoom() {
+    if (!window.confirm('Fermer définitivement cette battleroom ?')) return
+    closeRoomLoading.value = true
+    closeRoomError.value = null
+    try {
+      await battleroom.end(roomId.value, adminKey.value)
+      router.push({ name: 'admin' })
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) handleUnauthorized()
+      else closeRoomError.value = 'Erreur lors de la fermeture de la room.'
+    } finally {
+      closeRoomLoading.value = false
+    }
+  }
+
   function prevRound() { displayRound.value-- }
   function nextRound() { displayRound.value++ }
 
@@ -159,5 +176,6 @@ export function useBattleRoomManager() {
     goNextRound, onBattleEnded, prevRound, nextRound,
     players, playersLoading, playersError, dropLoading,
     fetchPlayers, dropPlayer,
+    closeRoom, closeRoomLoading, closeRoomError,
   }
 }
