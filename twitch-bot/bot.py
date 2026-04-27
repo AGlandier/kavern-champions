@@ -3,6 +3,7 @@ import httpx
 from twitchio.ext import commands
 import config
 from commands.enter import enter_command
+from commands.kchampions import kchampions_command
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
@@ -46,6 +47,10 @@ class KavernBot(commands.Bot):
     @commands.command(name="enter")
     async def enter(self, ctx: commands.Context):
         await enter_command(ctx)
+
+    @commands.command(name="kchampions")
+    async def kchampions(self, ctx: commands.Context):
+        await kchampions_command(ctx)
 
 
 if __name__ == "__main__":

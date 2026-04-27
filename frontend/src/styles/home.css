@@ -8,6 +8,22 @@
   box-sizing: border-box;
 }
 
+.home__dashboard-hint {
+  color: var(--color-text);
+  font-size: 1rem;
+  margin: 0;
+}
+
+.home__dashboard-link {
+  color: var(--color-twitch);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.home__dashboard-link:hover {
+  color: var(--color-twitch-hover);
+}
+
 .twitch-login-card {
   width: 100%;
   max-width: 50%;

@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS battlerooms (
     name              TEXT    NOT NULL,
     date              TEXT    NOT NULL DEFAULT (datetime('now')),
     round             INTEGER NOT NULL DEFAULT 0,
-    requires_teamlist INTEGER NOT NULL DEFAULT 0
+    requires_teamlist INTEGER NOT NULL DEFAULT 0,
+    closed            INTEGER NOT NULL DEFAULT 0
 );
 
 -- Table battle

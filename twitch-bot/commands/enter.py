@@ -3,6 +3,13 @@ import logging
 import config
 from api.client import get_latest_battleroom, battleroom_enter
 
+CLOSED_MESSAGE = (
+    "La Kaverne des Champions est fermée pour l'instant ! "
+    "Suis-moi sur twitter : https://x.com/g_rathur "
+    "ou rejoins le Discord : https://discord.gg/VushHVeU4A "
+    "pour te tenir au courant des prochaines éditions !"
+)
+
 _cooldowns: dict[str, float] = {}
 
 
@@ -15,8 +22,8 @@ async def enter_command(ctx) -> None:
     _cooldowns[username] = now
 
     room = await get_latest_battleroom()
-    if room is None:
-        await ctx.reply("Aucune battleroom n'est ouverte pour le moment.")
+    if room is None or room.get("closed"):
+        await ctx.reply(CLOSED_MESSAGE)
         return
 
     result = await battleroom_enter(room["id"], username)

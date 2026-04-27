@@ -34,7 +34,7 @@ def create_battleroom(name: str, requires_teamlist: bool = False, db_provider: C
     db.commit()
 
     row = db.execute(
-        "SELECT id, name, date, round, requires_teamlist FROM battlerooms WHERE id = ?",
+        "SELECT id, name, date, round, requires_teamlist, closed FROM battlerooms WHERE id = ?",
         (cursor.lastrowid,),
     ).fetchone()
 
@@ -44,6 +44,7 @@ def create_battleroom(name: str, requires_teamlist: bool = False, db_provider: C
         date=row["date"],
         round=row["round"],
         requires_teamlist=bool(row["requires_teamlist"]),
+        closed=bool(row["closed"]),
     )
 
 
@@ -56,7 +57,7 @@ def get_latest_battleroom(db_provider: Callable[[], sqlite3.Connection] = get_db
     """
     db: sqlite3.Connection = db_provider()
     row = db.execute(
-        "SELECT id, name, date, round, requires_teamlist FROM battlerooms ORDER BY id DESC LIMIT 1"
+        "SELECT id, name, date, round, requires_teamlist, closed FROM battlerooms ORDER BY id DESC LIMIT 1"
     ).fetchone()
     if row is None:
         raise NotFoundError("Aucune battleroom n'existe.")
@@ -66,6 +67,7 @@ def get_latest_battleroom(db_provider: Callable[[], sqlite3.Connection] = get_db
         date=row["date"],
         round=row["round"],
         requires_teamlist=bool(row["requires_teamlist"]),
+        closed=bool(row["closed"]),
     )
 
 
@@ -90,12 +92,12 @@ def get_all_battlerooms(
     if query:
         where = "WHERE name LIKE ?"
         params.append(f"{query}%")
-    sql = f"SELECT id, name, date, round, requires_teamlist FROM battlerooms {where} ORDER BY {order_clause}"
+    sql = f"SELECT id, name, date, round, requires_teamlist, closed FROM battlerooms {where} ORDER BY {order_clause}"
     if limit is not None:
         sql += " LIMIT ? OFFSET ?"
         params.extend([limit, offset])
     rows = db.execute(sql, params).fetchall()
-    return [Battleroom(id=r["id"], name=r["name"], date=r["date"], round=r["round"], requires_teamlist=bool(r["requires_teamlist"])) for r in rows]
+    return [Battleroom(id=r["id"], name=r["name"], date=r["date"], round=r["round"], requires_teamlist=bool(r["requires_teamlist"]), closed=bool(r["closed"])) for r in rows]
 
 
 def count_battlerooms(query: str | None = None, db_provider: Callable[[], sqlite3.Connection] = get_db) -> int:
@@ -121,7 +123,7 @@ def get_battleroom_by_id(battleroom_id: int, db_provider: Callable[[], sqlite3.C
     """
     db: sqlite3.Connection = db_provider()
     row = db.execute(
-        "SELECT id, name, date, round, requires_teamlist FROM battlerooms WHERE id = ?",
+        "SELECT id, name, date, round, requires_teamlist, closed FROM battlerooms WHERE id = ?",
         (battleroom_id,),
     ).fetchone()
 
@@ -134,6 +136,7 @@ def get_battleroom_by_id(battleroom_id: int, db_provider: Callable[[], sqlite3.C
         date=row["date"],
         round=row["round"],
         requires_teamlist=bool(row["requires_teamlist"]),
+        closed=bool(row["closed"]),
     )
 
 
@@ -240,15 +243,8 @@ def get_battleroom_for_user(username: str, db_provider: Callable[[], sqlite3.Con
 
 
 def leave_battleroom(battleroom_id: int, username: str, db_provider: Callable[[], sqlite3.Connection] = get_db) -> None:
-    """
-    Retire un joueur d'une battleroom.
-
-    Raises:
-        NotFoundError: Si la battleroom n'existe pas.
-    """
+    """Retire un joueur d'une battleroom. Silencieux si la room n'existe plus (enregistrement stale)."""
     db: sqlite3.Connection = db_provider()
-    if db.execute("SELECT id FROM battlerooms WHERE id = ?", (battleroom_id,)).fetchone() is None:
-        raise NotFoundError(f"Battleroom introuvable (id={battleroom_id}).")
     db.execute(
         "DELETE FROM battleroom_players WHERE battleroom_id = ? AND username = ?",
         (battleroom_id, username),
@@ -256,9 +252,9 @@ def leave_battleroom(battleroom_id: int, username: str, db_provider: Callable[[]
     db.commit()
 
 
-def delete_battleroom(battleroom_id: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> None:
+def close_battleroom(battleroom_id: int, db_provider: Callable[[], sqlite3.Connection] = get_db) -> None:
     """
-    Supprime une battleroom (et ses battles en cascade).
+    Ferme une battleroom (soft-close : closed = 1, la ligne est conservée).
 
     Raises:
         NotFoundError: Si la battleroom n'existe pas.
@@ -269,5 +265,5 @@ def delete_battleroom(battleroom_id: int, db_provider: Callable[[], sqlite3.Conn
     ).fetchone()
     if row is None:
         raise NotFoundError(f"Battleroom introuvable (id={battleroom_id}).")
-    db.execute("DELETE FROM battlerooms WHERE id = ?", (battleroom_id,))
+    db.execute("UPDATE battlerooms SET closed = 1 WHERE id = ?", (battleroom_id,))
     db.commit()

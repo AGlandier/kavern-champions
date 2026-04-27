@@ -6,7 +6,7 @@ const router = useRouter()
 const username = ref('')
 
 function submit() {
-  const name = username.value.trim()
+  const name = username.value.trim().toLowerCase()
   if (!name) return
   router.push({ name: 'login', query: { username: name } })
 }

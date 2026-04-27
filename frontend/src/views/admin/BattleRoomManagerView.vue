@@ -1,12 +1,17 @@
 <script setup>
 import { useBattleRoomManager } from './BattleRoomManagerView.js'
-import BattleRow from '../../components/admin/BattleRow.vue'
+import RoundsTab from '../../components/admin/RoundsTab.vue'
+import PlayersTab from '../../components/admin/PlayersTab.vue'
 import '../../styles/admin.css'
 
 const {
+  activeTab,
   room, battles, displayRound, loading, error, nextRoundLoading,
   hasPrevRound, hasNextRound, allBattlesFinished,
   goNextRound, onBattleEnded, prevRound, nextRound,
+  players, playersLoading, playersError, dropLoading,
+  dropPlayer,
+  closeRoom, closeRoomLoading, closeRoomError,
 } = useBattleRoomManager()
 </script>
 
@@ -25,50 +30,52 @@ const {
       >
         {{ nextRoundLoading ? '…' : 'Round suivant' }}
       </button>
+      <button class="kc-btn kc-btn--danger" :disabled="closeRoomLoading || room?.closed" @click="closeRoom">
+        {{ closeRoomLoading ? '…' : 'Fermer la room' }}
+      </button>
+    </div>
+    <p v-if="closeRoomError" class="admin__error">{{ closeRoomError }}</p>
+
+    <!-- Onglets -->
+    <div class="admin__tabs">
+      <button
+        class="admin__tab"
+        :class="{ 'admin__tab--active': activeTab === 'rounds' }"
+        @click="activeTab = 'rounds'"
+      >
+        Rounds
+      </button>
+      <button
+        class="admin__tab"
+        :class="{ 'admin__tab--active': activeTab === 'players' }"
+        @click="activeTab = 'players'"
+      >
+        Players
+      </button>
     </div>
 
     <p v-if="error" class="admin__error">{{ error }}</p>
 
-    <!-- Table des battles -->
-    <div class="admin__table-wrapper">
-      <p v-if="room && room.round === 0" class="admin__empty">
-        Aucun round démarré — lancez le premier round.
-      </p>
-      <p v-else-if="loading">Chargement…</p>
-      <table v-else class="admin__table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Joueur 1</th>
-            <th>Joueur 2</th>
-            <th>Room Champions</th>
-            <th>État</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <BattleRow
-            v-for="b in battles"
-            :key="b.id"
-            :battle="b"
-            @ended="onBattleEnded"
-          />
-          <tr v-if="battles.length === 0">
-            <td colspan="6" class="admin__empty">Aucune battle pour ce round.</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <RoundsTab
+      v-if="activeTab === 'rounds'"
+      :room="room"
+      :battles="battles"
+      :display-round="displayRound"
+      :loading="loading"
+      :has-prev-round="hasPrevRound"
+      :has-next-round="hasNextRound"
+      @battle-ended="onBattleEnded"
+      @prev-round="prevRound"
+      @next-round="nextRound"
+    />
 
-    <!-- Navigation rounds (masquée si aucun round) -->
-    <div v-if="room && room.round > 0" class="admin__pagination">
-      <button class="admin__pagination-btn" :disabled="!hasPrevRound" @click="prevRound">
-        &#8592; {{ hasPrevRound ? `Round ${displayRound - 1}` : '' }}
-      </button>
-      <span class="admin__round-indicator">Round {{ displayRound }}</span>
-      <button class="admin__pagination-btn" :disabled="!hasNextRound" @click="nextRound">
-        {{ hasNextRound ? `Round ${displayRound + 1}` : '' }} &#8594;
-      </button>
-    </div>
+    <PlayersTab
+      v-else-if="activeTab === 'players'"
+      :players="players"
+      :players-loading="playersLoading"
+      :players-error="playersError"
+      :drop-loading="dropLoading"
+      @drop="dropPlayer"
+    />
   </div>
 </template>

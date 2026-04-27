@@ -24,7 +24,7 @@ def create_user(name: str, db_provider: Callable[[], sqlite3.Connection] = get_d
         ValueError:     Si le nom est vide.
         DuplicateError: Si un utilisateur avec ce nom existe déjà.
     """
-    name = name.strip()
+    name = name.strip().lower()
     if not name:
         raise ValueError("Le nom de l'utilisateur ne peut pas être vide.")
 
@@ -55,7 +55,7 @@ def get_user(name: str, db_provider: Callable[[], sqlite3.Connection] = get_db) 
     Raises:
         NotFoundError: Si aucun utilisateur ne correspond à ce nom.
     """
-    name = name.strip()
+    name = name.strip().lower()
     db: sqlite3.Connection = db_provider()
 
     row = db.execute(
@@ -84,7 +84,7 @@ def get_battleroom_teamlist(
     db: sqlite3.Connection = db_provider()
     row = db.execute(
         "SELECT teamlist FROM battleroom_teamlist WHERE username = ? AND battleroom_id = ?",
-        (name.strip(), battleroom_id),
+        (name.strip().lower(), battleroom_id),
     ).fetchone()
     return row["teamlist"] if row else ""
 
@@ -104,7 +104,7 @@ def upsert_battleroom_teamlist(
     Raises:
         NotFoundError: Si l'utilisateur n'existe pas.
     """
-    name = name.strip()
+    name = name.strip().lower()
     db: sqlite3.Connection = db_provider()
 
     if db.execute("SELECT name FROM user WHERE name = ?", (name,)).fetchone() is None:
@@ -126,7 +126,7 @@ def increment_number_battle(name: str, db_provider: Callable[[], sqlite3.Connect
     """Incrémente le compteur de battles d'un utilisateur. Silencieux si l'utilisateur n'existe pas."""
     db: sqlite3.Connection = db_provider()
     db.execute(
-        "UPDATE user SET number_battle = number_battle + 1 WHERE name = ?", (name,)
+        "UPDATE user SET number_battle = number_battle + 1 WHERE name = ?", (name.strip().lower(),)
     )
     db.commit()
 
@@ -135,7 +135,7 @@ def user_has_password(name: str, db_provider: Callable[[], sqlite3.Connection] =
     """Retourne True si l'utilisateur a un mot de passe défini."""
     db: sqlite3.Connection = db_provider()
     row = db.execute(
-        "SELECT password_hash FROM user WHERE name = ?", (name.strip(),)
+        "SELECT password_hash FROM user WHERE name = ?", (name.strip().lower(),)
     ).fetchone()
     return row is not None and row["password_hash"] is not None
 
@@ -147,7 +147,7 @@ def set_user_password(name: str, password: str, db_provider: Callable[[], sqlite
     Raises:
         NotFoundError: Si l'utilisateur n'existe pas.
     """
-    name = name.strip()
+    name = name.strip().lower()
     db: sqlite3.Connection = db_provider()
     row = db.execute("SELECT name FROM user WHERE name = ?", (name,)).fetchone()
     if row is None:
@@ -163,7 +163,7 @@ def check_user_password(name: str, password: str, db_provider: Callable[[], sqli
     """Retourne True si le mot de passe correspond au hash stocké."""
     db: sqlite3.Connection = db_provider()
     row = db.execute(
-        "SELECT password_hash FROM user WHERE name = ?", (name.strip(),)
+        "SELECT password_hash FROM user WHERE name = ?", (name.strip().lower(),)
     ).fetchone()
     if row is None or row["password_hash"] is None:
         return False

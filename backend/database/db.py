@@ -9,6 +9,7 @@ def get_db() -> sqlite3.Connection:
         db_path = os.path.abspath(current_app.config["DATABASE_PATH"])
         g.db = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES)
         g.db.row_factory = sqlite3.Row  # accès par nom de colonne
+        g.db.execute("PRAGMA foreign_keys = ON")
     return g.db
 
 
@@ -28,7 +29,11 @@ def init_db() -> None:
     schema_path = os.path.join(os.path.dirname(__file__), "schema.sql")
     with open(schema_path, "r", encoding="utf-8") as f:
         db.executescript(f.read())
-    db.commit()
+    try:
+        db.execute("ALTER TABLE battlerooms ADD COLUMN closed INTEGER NOT NULL DEFAULT 0")
+        db.commit()
+    except Exception:
+        pass  # colonne déjà présente
     db.close()
     # Enregistre le teardown pour les requêtes Flask
     current_app.teardown_appcontext(close_db)
