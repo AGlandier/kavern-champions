@@ -5,6 +5,24 @@ import config
 from commands.enter import enter_command
 from commands.kchampions import kchampions_command
 
+
+def _refresh_token_at_startup() -> None:
+    try:
+        r = httpx.post("https://id.twitch.tv/oauth2/token", data={
+            "grant_type": "refresh_token",
+            "refresh_token": config.TWITCH_REFRESH_TOKEN,
+            "client_id": config.TWITCH_CLIENT_ID,
+            "client_secret": config.TWITCH_CLIENT_SECRET,
+        }, timeout=10.0)
+        r.raise_for_status()
+        data = r.json()
+        config.TWITCH_BOT_TOKEN = data["access_token"]
+        config.TWITCH_REFRESH_TOKEN = data["refresh_token"]
+        config.save_tokens(data["access_token"], data["refresh_token"])
+        logging.info("Token Twitch rafraîchi au démarrage")
+    except Exception as e:
+        logging.warning("Impossible de rafraîchir le token au démarrage : %s", e)
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
@@ -54,4 +72,5 @@ class KavernBot(commands.Bot):
 
 
 if __name__ == "__main__":
+    _refresh_token_at_startup()
     KavernBot().run()
